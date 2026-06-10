@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MINES — NFT СТАВКИ | ВОЗВРАТ NFT ПРИ ВЫИГРЫШЕ</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body {
+            font-family: -apple-system, system-ui;
+            background: radial-gradient(circle at 20% 30%, #0a0f1e, #03060c);
+            color: #fff;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        .balance-card {
+            background: linear-gradient(135deg, #1e2a3a, #0f1722);
+            border-radius: 60px;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid gold;
+            box-shadow: 0 0 12px rgba(255,215,0,0.3);
+        }
+        .balance-value { font-size: 32px; font-weight: bold; text-shadow: 0 0 6px gold; }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 48px;
+            padding: 6px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            text-align: center;
+            padding: 10px 12px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: #aaa;
+            font-size: 14px;
+        }
+        .tab.active {
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            color: white;
+            box-shadow: 0 0 10px #00c6ff;
+        }
+        .game-field {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .cell {
+            aspect-ratio: 1;
+            background: rgba(20,30,55,0.8);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid rgba(0,255,255,0.3);
+        }
+        .cell.opened-safe { background: #0f3b2c; border-color: #0f0; box-shadow: 0 0 12px #0f0; }
+        .cell.opened-mine { background: #8b0000; border-color: red; box-shadow: 0 0 15px red; }
+        .cell.mine-reveal { background: #b22222; border-color: #ff8888; box-shadow: 0 0 8px red; }
+        .multiplier {
+            font-size: 48px;
+            text-align: center;
+            background: #000000aa;
+            border-radius: 60px;
+            padding: 10px;
+            margin: 15px 0;
+            color: gold;
+            text-shadow: 0 0 12px gold;
+        }
+        .bet-type-panel {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .bet-type-btn {
+            background: #2c3e66;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .bet-type-btn.active { background: gold; color: black; }
+        .stars-bet-panel, .nft-bet-panel {
+            background: rgba(0,0,0,0.4);
+            border-radius: 60px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        .bet-amount-panel {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 12px 0;
+        }
+        .bet-amount-btn {
+            background: #2c3e66;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .bet-amount-btn.active { background: gold; color: black; }
+        select, input {
+            background: #1e2a3e;
+            border: 1px solid gold;
+            padding: 10px;
+            border-radius: 40px;
+            color: white;
+            width: 100%;
+            margin: 8px 0;
+        }
+        button {
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            border: none;
+            padding: 12px;
+            border-radius: 60px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+            margin-top: 8px;
+        }
+        .nft-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .nft-card {
+            background: #1e2a3e;
+            border-radius: 20px;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid gold;
+        }
+        .nft-emoji { font-size: 48px; }
+        .nft-price { font-size: 12px; color: #ffaa44; margin: 4px 0; }
+        .nft-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .nft-action-btn {
+            background: #e67e22;
+            border: none;
+            padding: 5px;
+            border-radius: 30px;
+            font-size: 11px;
+            cursor: pointer;
+            flex: 1;
+        }
+        footer { font-size: 10px; text-align: center; margin-top: 30px; opacity: 0.6; }
+        .admin-panel { margin-top: 15px; }
+        .status-pending { color: #ffaa44; }
+        .status-approved { color: #44ff44; }
+        .status-rejected { color: #ff4444; }
+        .request-item, .promocode-item {
+            background: #00000066;
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<div style="max-width:500px; margin:0 auto;">
+    <div class="balance-card">
+        <span>⭐ ЗВЁЗДЫ</span>
+        <span class="balance-value" id="balance">0</span>
+    </div>
+    <div class="tabs">
+        <div class="tab active" data-tab="mines">💣 МИНЫ</div>
+        <div class="tab" data-tab="inventory">🎒 ИНВЕНТАРЬ</div>
+        <div class="tab" data-tab="promo">🎫 ПРОМОКОД</div>
+        <div class="tab" data-tab="admin">👑 АДМИН</div>
+    </div>
+
+    <!-- ИГРА -->
+    <div id="tab-mines">
+        <div class="multiplier" id="multiplierDisplay">1.00x</div>
+        <div class="bet-type-panel">
+            <div id="betTypeStarsBtn" class="bet-type-btn active">⭐ СТАВКА ЗВЁЗДАМИ</div>
+            <div id="betTypeNftBtn" class="bet-type-btn">🎁 СТАВКА NFT</div>
+        </div>
+        <div id="starsBetPanel" class="stars-bet-panel">
+            <div class="bet-amount-panel">
+                <div class="bet-amount-btn" data-stars="10">10⭐</div>
+                <div class="bet-amount-btn" data-stars="50">50⭐</div>
+                <div class="bet-amount-btn" data-stars="100">100⭐</div>
+                <div class="bet-amount-btn" data-stars="500">500⭐</div>
+                <input type="number" id="customStarsBet" placeholder="Своя" style="width:100px;">
+            </div>
+        </div>
+        <div id="nftBetPanel" class="nft-bet-panel" style="display:none;">
+            <select id="nftForBetSelect"><option value="">-- Выберите NFT --</option></select>
+        </div>
+        <div class="game-field" id="minesField"></div>
+        <button id="cashoutBtn">💰 ЗАБРАТЬ</button>
+        <button id="newGameBtn">🔄 НОВАЯ ИГРА</button>
+    </div>
+
+    <!-- ИНВЕНТАРЬ -->
+    <div id="tab-inventory" style="display:none;">
+        <div id="inventoryList" class="nft-grid">Загрузка...</div>
+    </div>
+
+    <!-- ПРОМОКОДЫ -->
+    <div id="tab-promo" style="display:none;">
+        <input type="text" id="promoInput" placeholder="Введите промокод">
+        <button id="activatePromoBtn">Активировать</button>
+    </div>
+
+    <!-- АДМИН-ПАНЕЛЬ (ДЛЯ ВСЕХ) -->
+    <div id="tab-admin" style="display:none;">
+        <div class="admin-panel">
+            <h3>📌 ЗАЯВКИ НА ВЫВОД NFT</h3>
+            <div id="adminWithdrawRequests"></div>
+            <h3>🆕 СОЗДАТЬ ПРОМОКОД</h3>
+            <input type="text" id="promoCodeName" placeholder="Код">
+            <select id="promoType">
+                <option value="stars">⭐ ЗВЁЗДЫ</option>
+                <option value="nft">🎁 NFT</option>
+            </select>
+            <div id="promoStarsPanel"><input type="number" id="promoStarsAmount" placeholder="Звёзды" value="100"></div>
+            <div id="promoNftPanel" style="display:none;"><select id="promoNftSelect"></select></div>
+            <button id="createPromoBtn">✨ СОЗДАТЬ</button>
+            <h3>📋 АКТИВНЫЕ ПРОМОКОДЫ</h3>
+            <div id="activePromocodes"></div>
+            <h3>🎨 СОЗДАТЬ НОВЫЙ NFT (ГЛОБАЛЬНЫЙ)</h3>
+            <input type="text" id="newNftEmoji" placeholder="Эмодзи (🔥)" value="🔥">
+            <input type="text" id="newNftName" placeholder="Название" value="Пламенный">
+            <input type="number" id="newNftPrice" placeholder="Цена (⭐)" value="200">
+            <button id="createNewNftBtn">➕ ДОБАВИТЬ NFT</button>
+            <h3>🎁 ВЫДАТЬ NFT ПОЛЬЗОВАТЕЛЮ</h3>
+            <input type="text" id="targetUserIdForNft" placeholder="Telegram ID (или имя)">
+            <select id="globalNftSelect"></select>
+            <button id="giveNftBtn">ВЫДАТЬ</button>
+            <h3>➕ ВЫДАТЬ ЗВЁЗДЫ</h3>
+            <input type="text" id="targetUserIdStars" placeholder="Telegram ID">
+            <input type="number" id="addStarsAmount" placeholder="Сумма">
+            <button id="addStarsBtn">ВЫДАТЬ</button>
+        </div>
+    </div>
+    <footer>⭐ Ставка звёздами → выигрыш звёздами. 🎁 Ставка NFT → при выигрыше NFT возвращается + новый NFT (цена×коэфф). При проигрыше NFT сгорает.<br>👑 Админ-панель доступна всем! Отклонённая заявка на вывод оставляет NFT в инвентаре.</footer>
+</div>
+
+<script>
+    (function() {
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        let user = tg.initDataUnsafe?.user;
+        let currentUserId = user ? String(user.id) : "local_" + Math.random().toString(36).substring(7);
+        let currentUserName = user ? (user.first_name || "Игрок") : "Игрок";
+
+        // Админ для всех
+        const isAdmin = true;
+
+        // Глобальные данные
+        let userData = { stars: 500, inventory: [] };
+        let globalNfts = [];
+        let promocodes = [];
+        let withdrawRequests = [];
+
+        const defaultNfts = [
+            { id: "nft1", emoji: "🍦", name: "Мороженое", price: 100 },
+            { id: "nft2", emoji: "🍕", name: "Пицца", price: 200 },
+            { id: "nft3", emoji: "💀", name: "Череп", price: 350 }
+        ];
+
+        function loadGlobalData() {
+            const nfts = localStorage.getItem('global_nfts');
+            if (nfts) try { globalNfts = JSON.parse(nfts); } catch(e) {}
+            if (!globalNfts.length) globalNfts = [...defaultNfts];
+            const promos = localStorage.getItem('promocodes');
+            if (promos) try { promocodes = JSON.parse(promos); } catch(e) {}
+            const reqs = localStorage.getItem('withdraw_requests');
+            if (reqs) try { withdrawRequests = JSON.parse(reqs); } catch(e) {}
+        }
+        function saveGlobalNfts() { localStorage.setItem('global_nfts', JSON.stringify(globalNfts)); }
+        function savePromocodes() { localStorage.setItem('promocodes', JSON.stringify(promocodes)); }
+        function saveWithdrawRequests() { localStorage.setItem('withdraw_requests', JSON.stringify(withdrawRequests)); }
+
+        function loadUserData() {
+            const raw = localStorage.getItem(`user_${currentUserId}`);
+            if (raw) {
+                try { const d = JSON.parse(raw); userData.stars = d.stars ?? 500; userData.inventory = d.inventory ?? []; } catch(e) {}
+            } else {
+                userData = { stars: 500, inventory: [] };
+                saveUserData();
+            }
+        }
+        function saveUserData() {
+            localStorage.setItem(`user_${currentUserId}`, JSON.stringify({
+                stars: userData.stars,
+                inventory: userData.inventory
+            }));
+        }
+        function updateBalanceUI() {
+            document.getElementById('balance').innerText = Math.floor(userData.stars);
+        }
+
+        // ==================== ИНВЕНТАРЬ ====================
+        function renderInventory() {
+            const container = document.getElementById('inventoryList');
+            if (!container) return;
+            if (!userData.inventory.length) {
+                container.innerHTML = '<div style="text-align:center;">У вас нет NFT</div>';
+                return;
+            }
+            container.innerHTML = '';
+            userData.inventory.forEach((nft, idx) => {
+                const card = document.createElement('div');
+                card.className = 'nft-card';
+                card.innerHTML = `
+                    <div class="nft-emoji">${nft.emoji}</div>
+                    <div class="nft-name">${nft.name}</div>
+                    <div class="nft-price">⭐ ${nft.price}</div>
+                    <div class="nft-buttons">
+                        <button class="bet-from-inv" data-idx="${idx}" style="background:#e67e22;">🎲 СТАВКА</button>
+                        <button class="withdraw-from-inv" data-idx="${idx}" style="background:#e74c3c;">📤 ВЫВЕСТИ</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            document.querySelectorAll('.bet-from-inv').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.currentTarget.dataset.idx);
+                    const nft = userData.inventory[idx];
+                    if (!nft) return;
+                    selectedNftForBet = { ...nft, inventoryIdx: idx };
+                    tg.showPopup({title:"NFT выбран", message:`${nft.emoji} ${nft.name}`});
+                    setBetType('nft');
+                    const nftSelect = document.getElementById('nftForBetSelect');
+                    if (nftSelect) {
+                        for (let i=0; i<nftSelect.options.length; i++) {
+                            if (nftSelect.options[i].value == idx) nftSelect.selectedIndex = i;
+                        }
+                    }
+                });
+            });
+            document.querySelectorAll('.withdraw-from-inv').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.currentTarget.dataset.idx);
+                    const nft = userData.inventory[idx];
+                    if (!nft) return;
+                    // Создаём заявку, НЕ УДАЛЯЯ NFT из инвентаря
+                    const newReq = {
+                        id: Date.now() + "_" + Math.random(),
+                        userId: currentUserId,
+                        userName: currentUserName,
+                        nft: { ...nft },
+                        status: "pending",
+                        timestamp: Date.now()
+                    };
+                    withdrawRequests.push(newReq);
+                    saveWithdrawRequests();
+                    tg.showPopup({title:"Заявка отправлена", message:`Вывод "${nft.name}" ожидает решения админа`});
+                    if (isAdmin) renderAdminPanel();
+                });
+            });
+        }
+
+        function renderNftSelectForBet() {
+            const select = document.getElementById('nftForBetSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Выберите NFT --</option>';
+            userData.inventory.forEach((nft, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = `${nft.emoji} ${nft.name} (⭐${nft.price})`;
+                select.appendChild(opt);
+            });
+            select.onchange = () => {
+                const idx = parseInt(select.value);
+                if (!isNaN(idx) && userData.inventory[idx]) selectedNftForBet = { ...userData.inventory[idx], inventoryIdx: idx };
+                else selectedNftForBet = null;
+            };
+        }
+
+        // ==================== АДМИН-ПАНЕЛЬ ====================
+        async function renderAdminPanel() {
+            // Заявки на вывод
+            const reqContainer = document.getElementById('adminWithdrawRequests');
+            if (reqContainer) {
+                const pending = withdrawRequests.filter(r => r.status === 'pending');
+                if (!pending.length) reqContainer.innerHTML = '<div>Нет заявок</div>';
+                else {
+                    reqContainer.innerHTML = '';
+                    pending.forEach((req, idx) => {
+                        const nft = req.nft;
+                        const div = document.createElement('div');
+                        div.className = 'request-item';
+                        div.innerHTML = `
+                            <div><b>${req.userName}</b> (${req.userId})<br>📦 ${nft.emoji} ${nft.name} (⭐${nft.price})</div>
+                            <div>
+                                <button class="approveReq" data-idx="${idx}" style="background:#2ecc71;">✅ ПРИНЯТЬ</button>
+                                <button class="rejectReq" data-idx="${idx}" style="background:#e74c3c;">❌ ОТКЛОНИТЬ</button>
+                            </div>
+                        `;
+                        reqContainer.appendChild(div);
+                    });
+                    document.querySelectorAll('.approveReq').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const idx = parseInt(btn.dataset.idx);
+                            const req = withdrawRequests[idx];
+                            if (req) {
+                                // При принятии удаляем NFT из инвентаря
+                                const userKey = `user_${req.userId}`;
+                                const raw = localStorage.getItem(userKey);
+                                if (raw) {
+                                    let ud = JSON.parse(raw);
+                                    ud.inventory = ud.inventory.filter(n => n.id !== req.nft.id);
+                                    localStorage.setItem(userKey, JSON.stringify(ud));
+                                    if (req.userId === currentUserId) {
+                                        userData.inventory = ud.inventory;
+                                        saveUserData();
+                                    }
+                                }
+                                req.status = 'approved';
+                                saveWithdrawRequests();
+                                renderAdminPanel();
+                                updateUI();
+                                tg.showPopup({title:"Заявка принята", message:`NFT "${req.nft.name}" удалён у пользователя ${req.userName}`});
+                            }
+                        });
+                    });
+                    document.querySelectorAll('.rejectReq').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const idx = parseInt(btn.dataset.idx);
+                            const req = withdrawRequests[idx];
+                            if (req) {
+                                // Отклоняем – NFT остаётся в инвентаре (ничего не удаляем)
+                                req.status = 'rejected';
+                                saveWithdrawRequests();
+                                renderAdminPanel();
+                                tg.showPopup({title:"Заявка отклонена", message:`NFT "${req.nft.name}" остаётся в инвентаре у ${req.userName}`});
+                                updateUI();
+                            }
+                        });
+                    });
+                }
+            }
+
+            // Промокоды
+            const promoContainer = document.getElementById('activePromocodes');
+            if (promoContainer) {
+                if (!promocodes.length) promoContainer.innerHTML = '<div>Нет промокодов</div>';
+                else {
+                    promoContainer.innerHTML = '';
+                    promocodes.forEach((p, idx) => {
+                        const div = document.createElement('div');
+                        div.className = 'promocode-item';
+                        let reward = p.type === 'stars' ? `${p.stars_value}⭐` : `${p.nft_obj.emoji} ${p.nft_obj.name}`;
+                        div.innerHTML = `<div><b>${p.code}</b> — ${reward} <button class="delPromoBtn" data-idx="${idx}" style="background:#e74c3c;">🗑️</button></div>`;
+                        promoContainer.appendChild(div);
+                    });
+                    document.querySelectorAll('.delPromoBtn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const idx = parseInt(btn.dataset.idx);
+                            promocodes.splice(idx, 1);
+                            savePromocodes();
+                            renderAdminPanel();
+                        });
+                    });
+                }
+            }
+
+            // Селекты для выдачи NFT
+            const promoNftSelect = document.getElementById('promoNftSelect');
+            if (promoNftSelect) {
+                promoNftSelect.innerHTML = '';
+                globalNfts.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify(n);
+                    opt.textContent = `${n.emoji} ${n.name} (⭐${n.price})`;
+                    promoNftSelect.appendChild(opt);
+                });
+            }
+            const globalNftSelect = document.getElementById('globalNftSelect');
+            if (globalNftSelect) {
+                globalNftSelect.innerHTML = '';
+                globalNfts.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify(n);
+                    opt.textContent = `${n.emoji} ${n.name} (⭐${n.price})`;
+                    globalNftSelect.appendChild(opt);
+                });
+            }
+        }
+
+        // ==================== ПРОМОКОДЫ ====================
+        function createPromo(code, type, value, nftObj) {
+            if (!code.trim()) { tg.showPopup({title:"Ошибка", message:"Введите код"}); return false; }
+            if (promocodes.some(p => p.code === code.trim())) { tg.showPopup({title:"Ошибка", message:"Промокод уже существует"}); return false; }
+            if (type === 'stars') {
+                if (value <= 0) { tg.showPopup({title:"Ошибка", message:"Звёзд >0"}); return false; }
+                promocodes.push({ code: code.trim(), type: 'stars', stars_value: value });
+            } else {
+                if (!nftObj) return false;
+                promocodes.push({ code: code.trim(), type: 'nft', nft_obj: { ...nftObj, id: Date.now()+"_promo" } });
+            }
+            savePromocodes();
+            tg.showPopup({title:"Создано", message:`Промокод "${code}"`});
+            renderAdminPanel();
+            return true;
+        }
+
+        function activatePromo(code) {
+            const promo = promocodes.find(p => p.code === code.trim());
+            if (!promo) { tg.showPopup({title:"Ошибка", message:"Промокод не найден"}); return; }
+            if (promo.type === 'stars') {
+                userData.stars += promo.stars_value;
+                saveUserData();
+                tg.showPopup({title:"Активирован", message:`+${promo.stars_value}⭐`});
+            } else {
+                const newNft = { ...promo.nft_obj, id: Date.now()+"_"+Math.random() };
+                userData.inventory.push(newNft);
+                saveUserData();
+                tg.showPopup({title:"Активирован", message:`Вы получили NFT: ${newNft.emoji} ${newNft.name}`});
+            }
+            const idx = promocodes.findIndex(p => p.code === code.trim());
+            if (idx !== -1) promocodes.splice(idx, 1);
+            savePromocodes();
+            updateUI();
+            if (isAdmin) renderAdminPanel();
+        }
+
+        // ==================== СОЗДАНИЕ ГЛОБАЛЬНЫХ NFT ====================
+        function addNewGlobalNft(emoji, name, price) {
+            if (!emoji.trim() || !name.trim() || price <= 0) {
+                tg.showPopup({title:"Ошибка", message:"Заполните все поля (эмодзи, название, цена >0)"});
+                return;
+            }
+            const newNft = {
+                id: Date.now() + "_" + Math.random(),
+                emoji: emoji.trim(),
+                name: name.trim(),
+                price: parseInt(price)
+            };
+            globalNfts.push(newNft);
+            saveGlobalNfts();
+            tg.showPopup({title:"NFT создан", message:`Добавлен ${newNft.emoji} ${newNft.name} (⭐${newNft.price})`});
+            renderAdminPanel();
+        }
+
+        // ==================== ВЫДАЧА ЗВЁЗД И NFT АДМИНОМ ====================
+        function giveNftToUser(uid, nftObj) {
+            if (!uid || !nftObj) return;
+            const copyNft = { ...nftObj, id: Date.now()+"_admin" };
+            const key = `user_${uid}`;
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                let ud = JSON.parse(raw);
+                ud.inventory = ud.inventory || [];
+                ud.inventory.push(copyNft);
+                localStorage.setItem(key, JSON.stringify(ud));
+                if (uid === currentUserId) {
+                    userData.inventory.push(copyNft);
+                    saveUserData();
+                    renderInventory();
+                }
+            } else {
+                localStorage.setItem(key, JSON.stringify({ stars: 0, inventory: [copyNft] }));
+            }
+            tg.showPopup({title:"Выдано", message:`${copyNft.emoji} ${copyNft.name} пользователю ${uid}`});
+            updateUI();
+        }
+
+        function addStarsToUser(uid, amount) {
+            if (!uid || amount <= 0) return;
+            const key = `user_${uid}`;
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                let ud = JSON.parse(raw);
+                ud.stars = (ud.stars || 0) + amount;
+                localStorage.setItem(key, JSON.stringify(ud));
+                if (uid === currentUserId) {
+                    userData.stars += amount;
+                    saveUserData();
+                    updateBalanceUI();
+                }
+            } else {
+                localStorage.setItem(key, JSON.stringify({ stars: amount, inventory: [] }));
+            }
+            tg.showPopup({title:"Добавлено", message:`+${amount}⭐ пользователю ${uid}`});
+            updateUI();
+        }
+
+        // ==================== ИГРА ====================
+        let currentGameActive = false, currentBetType = 'stars', currentBetValue = 0, currentGameBetNft = null, currentMultiplier = 1, openedCells = [], minePositions = [], cells = [], revealTimeout = null, selectedNftForBet = null;
+
+        function initGameField() {
+            const container = document.getElementById('minesField');
+            container.innerHTML = '';
+            for (let i=0;i<16;i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                cell.innerText = '❓';
+                cell.addEventListener('click', () => onCellClick(i));
+                container.appendChild(cell);
+            }
+            cells = document.querySelectorAll('#minesField .cell');
+        }
+
+        function getStarsBet() {
+            const activeBtn = document.querySelector('#starsBetPanel .bet-amount-btn.active');
+            if (activeBtn && activeBtn.dataset.stars) return parseInt(activeBtn.dataset.stars);
+            const custom = parseInt(document.getElementById('customStarsBet').value);
+            return (!isNaN(custom) && custom > 0) ? custom : 0;
+        }
+
+        function startNewRound() {
+            if (currentGameActive) { tg.showPopup({title:"Ошибка", message:"Раунд уже идёт"}); return false; }
+            if (currentBetType === 'stars') {
+                let bet = getStarsBet();
+                if (bet <= 0) { tg.showPopup({title:"Ошибка", message:"Выберите сумму"}); return false; }
+                if (userData.stars < bet) { tg.showPopup({title:"Ошибка", message:"Не хватает звёзд"}); return false; }
+                userData.stars -= bet; saveUserData(); updateBalanceUI();
+                currentBetValue = bet; currentGameBetNft = null;
+            } else {
+                if (!selectedNftForBet) { tg.showPopup({title:"Ошибка", message:"Выберите NFT"}); return false; }
+                const stillExists = userData.inventory.some(n => n.id === selectedNftForBet.id);
+                if (!stillExists) { tg.showPopup({title:"Ошибка", message:"NFT уже не в инвентаре"}); selectedNftForBet = null; renderInventory(); return false; }
+                // Удаляем NFT из инвентаря (ставка)
+                const idx = userData.inventory.findIndex(n => n.id === selectedNftForBet.id);
+                if (idx !== -1) userData.inventory.splice(idx,1);
+                saveUserData();
+                currentBetValue = selectedNftForBet.price;
+                currentGameBetNft = { ...selectedNftForBet, originalNft: selectedNftForBet };
+                selectedNftForBet = null;
+                renderInventory();
+            }
+            const positions = Array.from({length:16},(_,i)=>i);
+            for (let i=positions.length-1;i>0;i--) { let j=Math.floor(Math.random()*(i+1)); [positions[i],positions[j]]=[positions[j],positions[i]]; }
+            minePositions = positions.slice(0,3);
+            openedCells = [];
+            currentMultiplier = 1;
+            currentGameActive = true;
+            document.getElementById('cashoutBtn').disabled = false;
+            updateMultiplierDisplay();
+            renderField();
+            tg.showPopup({title:"Игра началась", message:`Ставка ${currentBetValue}⭐`});
+            return true;
+        }
+
+        function onCellClick(idx) {
+            if (!currentGameActive) return;
+            if (openedCells.includes(idx)) return;
+            if (minePositions.includes(idx)) {
+                currentGameActive = false;
+                document.getElementById('cashoutBtn').disabled = true;
+                revealAllMines(() => {
+                    tg.showPopup({title:"💥 КРАХ", message: currentBetType==='stars'?`Проиграно ${currentBetValue}⭐`:`NFT "${currentGameBetNft.name}" сгорел!`});
+                    currentGameBetNft = null;
+                    resetGameUI();
+                });
+                return;
+            }
+            openedCells.push(idx);
+            currentMultiplier = 1 + (openedCells.length * 0.25);
+            updateMultiplierDisplay();
+            renderField();
+            if (openedCells.length === 13) cashout();
+        }
+
+        function cashout() {
+            if (!currentGameActive) return;
+            const win = Math.floor(currentBetValue * currentMultiplier);
+            if (currentBetType === 'stars') {
+                userData.stars += win; saveUserData(); updateBalanceUI();
+                tg.showPopup({title:"🏆 ВЫИГРЫШ", message:`+${win}⭐`});
+            } else {
+                // Возвращаем поставленный NFT
+                if (currentGameBetNft && currentGameBetNft.originalNft) {
+                    userData.inventory.push({ ...currentGameBetNft.originalNft });
+                }
+                // Создаём новый выигрышный NFT
+                let newNft = null;
+                const exact = globalNfts.find(n => n.price === win);
+                if (exact) {
+                    newNft = { ...exact, id: Date.now()+"_"+Math.random() };
+                } else {
+                    const emojis = ['🍦','🍕','🍔','🌮','🍣','🍎','🎁','💎'];
+                    const randEmoji = emojis[Math.floor(Math.random()*emojis.length)];
+                    newNft = { id: Date.now()+"_"+Math.random(), emoji: randEmoji, name: `Выигрыш x${currentMultiplier.toFixed(2)}`, price: win };
+                }
+                userData.inventory.push(newNft);
+                saveUserData();
+                renderInventory();
+                tg.showPopup({title:"🏆 ВЫИГРЫШ", message:`Ваш NFT возвращён + новый NFT: ${newNft.emoji} ${newNft.name} (⭐${win})`});
+            }
+            currentGameActive = false;
+            document.getElementById('cashoutBtn').disabled = true;
+            revealAllMines(() => {
+                currentGameBetNft = null;
+                resetGameUI();
+            });
+        }
+
+        function revealAllMines(cb) {
+            for (let i=0;i<minePositions.length;i++) { let p=minePositions[i]; if (cells[p] && !openedCells.includes(p)) { cells[p].classList.add('mine-reveal'); cells[p].innerText='💣'; } }
+            if (revealTimeout) clearTimeout(revealTimeout);
+            revealTimeout = setTimeout(() => {
+                for (let i=0;i<16;i++) if (cells[i]) { cells[i].classList.remove('mine-reveal','opened-safe','opened-mine'); cells[i].innerText='❓'; }
+                if (cb) cb();
+            }, 2000);
+        }
+
+        function resetGameUI() {
+            currentGameActive = false; currentMultiplier=1; openedCells=[]; minePositions=[];
+            updateMultiplierDisplay(); renderField(); updateUI();
+        }
+
+        function updateMultiplierDisplay() { document.getElementById('multiplierDisplay').innerText = currentMultiplier.toFixed(2)+'x'; }
+        function renderField() { for (let i=0;i<16;i++) if (cells[i]) cells[i].innerText = openedCells.includes(i) ? '💰' : '❓'; }
+
+        // ==================== УПРАВЛЕНИЕ ТИПОМ СТАВКИ ====================
+        const starsPanelDiv = document.getElementById('starsBetPanel'), nftPanelDiv = document.getElementById('nftBetPanel');
+        const starsTypeBtn = document.getElementById('betTypeStarsBtn'), nftTypeBtn = document.getElementById('betTypeNftBtn');
+        function setBetType(type) {
+            currentBetType = type;
+            if (type === 'stars') {
+                starsTypeBtn.classList.add('active'); nftTypeBtn.classList.remove('active');
+                starsPanelDiv.style.display = 'block'; nftPanelDiv.style.display = 'none';
+            } else {
+                starsTypeBtn.classList.remove('active'); nftTypeBtn.classList.add('active');
+                starsPanelDiv.style.display = 'none'; nftPanelDiv.style.display = 'block';
+                renderNftSelectForBet();
+            }
+        }
+        starsTypeBtn.onclick = () => setBetType('stars');
+        nftTypeBtn.onclick = () => setBetType('nft');
+
+        // ==================== ОБЩИЕ ОБРАБОТЧИКИ ====================
+        document.querySelectorAll('#starsBetPanel .bet-amount-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#starsBetPanel .bet-amount-btn').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        document.getElementById('cashoutBtn').onclick = () => { if (currentGameActive) cashout(); };
+        document.getElementById('newGameBtn').onclick = () => { if (currentGameActive) tg.showPopup({title:"Игра активна", message:"Сначала завершите раунд"}); else startNewRound(); };
+        document.getElementById('activatePromoBtn').onclick = () => { const code = document.getElementById('promoInput').value.trim(); if (code) activatePromo(code); else tg.showPopup({title:"Ошибка", message:"Введите код"}); };
+
+        // КНОПКИ АДМИНА
+        document.getElementById('createPromoBtn').onclick = () => {
+            const code = document.getElementById('promoCodeName').value.trim();
+            const type = document.getElementById('promoType').value;
+            if (type === 'stars') {
+                const amount = parseInt(document.getElementById('promoStarsAmount').value);
+                if (amount > 0) createPromo(code, 'stars', amount);
+                else tg.showPopup({title:"Ошибка", message:"Введите число звёзд"});
+            } else {
+                const sel = document.getElementById('promoNftSelect');
+                if (sel && sel.value) createPromo(code, 'nft', 0, JSON.parse(sel.value));
+                else tg.showPopup({title:"Ошибка", message:"Выберите NFT"});
+            }
+        };
+        document.getElementById('promoType').addEventListener('change', () => {
+            const type = document.getElementById('promoType').value;
+            document.getElementById('promoStarsPanel').style.display = type === 'stars' ? 'block' : 'none';
+            document.getElementById('promoNftPanel').style.display = type === 'nft' ? 'block' : 'none';
+        });
+        document.getElementById('createNewNftBtn').onclick = () => {
+            const emoji = document.getElementById('newNftEmoji').value.trim();
+            const name = document.getElementById('newNftName').value.trim();
+            const price = parseInt(document.getElementById('newNftPrice').value);
+            addNewGlobalNft(emoji, name, price);
+        };
+        document.getElementById('giveNftBtn').onclick = () => {
+            const uid = document.getElementById('targetUserIdForNft').value.trim();
+            const sel = document.getElementById('globalNftSelect');
+            if (uid && sel && sel.value) giveNftToUser(uid, JSON.parse(sel.value));
+            else tg.showPopup({title:"Ошибка", message:"Введите ID и выберите NFT"});
+        };
+        document.getElementById('addStarsBtn').onclick = () => {
+            const uid = document.getElementById('targetUserIdStars').value.trim();
+            const amt = parseInt(document.getElementById('addStarsAmount').value);
+            if (uid && amt>0) addStarsToUser(uid, amt);
+            else tg.showPopup({title:"Ошибка", message:"Введите ID и сумму"});
+        };
+
+        // ==================== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ====================
+        function switchTab(tabId) {
+            document.getElementById('tab-mines').style.display = 'none';
+            document.getElementById('tab-inventory').style.display = 'none';
+            document.getElementById('tab-promo').style.display = 'none';
+            if (document.getElementById('tab-admin')) document.getElementById('tab-admin').style.display = 'none';
+            if (tabId === 'mines') document.getElementById('tab-mines').style.display = 'block';
+            if (tabId === 'inventory') document.getElementById('tab-inventory').style.display = 'block';
+            if (tabId === 'promo') document.getElementById('tab-promo').style.display = 'block';
+            if (tabId === 'admin') document.getElementById('tab-admin').style.display = 'block';
+            if (tabId === 'inventory') renderInventory();
+            if (tabId === 'admin') renderAdminPanel();
+            if (tabId === 'mines') setBetType(currentBetType);
+        }
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+                tab.classList.add('active');
+                switchTab(tab.dataset.tab);
+            });
+        });
+
+        async function updateUI() {
+            updateBalanceUI();
+            renderInventory();
+            renderNftSelectForBet();
+            if (isAdmin) await renderAdminPanel();
+        }
+
+        loadGlobalData();
+        loadUserData();
+        initGameField();
+        setBetType('stars');
+        updateUI();
+        renderAdminPanel();
+    })();
+</script>
+</body>
+</html>
