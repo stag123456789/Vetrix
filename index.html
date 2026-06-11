@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Telegram Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f0f0f;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        /* Карточка как у web.telegram.org */
+        .card {
+            max-width: 420px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 24px 28px 36px;
+            transition: all 0.2s ease;
+        }
+
+        /* Хедер как в Telegram */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .telegram-icon {
+            width: 56px;
+            height: 56px;
+            background: #27a6e5;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .telegram-icon svg {
+            width: 36px;
+            height: 36px;
+            fill: white;
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 500;
+            color: #000000;
+            margin-bottom: 8px;
+        }
+
+        .sub {
+            color: #707579;
+            font-size: 15px;
+            margin-bottom: 28px;
+            line-height: 1.4;
+        }
+
+        /* Поля ввода */
+        .field {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #8e8e93;
+            margin-bottom: 6px;
+        }
+
+        .select-country {
+            width: 100%;
+            padding: 14px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #c6c6c8;
+            font-size: 17px;
+            color: #000;
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .phone-input {
+            width: 100%;
+            padding: 14px 0;
+            font-size: 17px;
+            border: none;
+            border-bottom: 1px solid #c6c6c8;
+            outline: none;
+            background: transparent;
+            font-family: monospace;
+            font-size: 20px;
+        }
+
+        .phone-input:focus {
+            border-bottom-color: #27a6e5;
+        }
+
+        /* Чекбокс */
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .checkbox input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .checkbox label {
+            margin: 0;
+            font-size: 15px;
+            font-weight: normal;
+            color: #000;
+        }
+
+        /* Кнопка */
+        .btn {
+            width: 100%;
+            background: #27a6e5;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 14px;
+            font-size: 17px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 16px 0 20px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active {
+            opacity: 0.8;
+        }
+
+        .btn:disabled {
+            background: #b0d4f0;
+            cursor: not-allowed;
+        }
+
+        /* Альтернативные кнопки входа */
+        .alt-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .alt-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #c6c6c8;
+            border-radius: 30px;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #27a6e5;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* Спиннер (ожидание) */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .waiting-text {
+            color: #27a6e5;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Выпадающий список стран (упрощённо) */
+        .country-dropdown {
+            display: none;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            background: white;
+            position: absolute;
+            width: calc(100% - 56px);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .country-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 16px;
+            border-bottom: 1px solid #efeff4;
+        }
+        .country-item:hover {
+            background: #f4f4f4;
+        }
+        .relative {
+            position: relative;
+        }
+
+        .code-row {
+            margin-top: 20px;
+        }
+
+        .domain {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+            color: #8e8e93;
+        }
+    </style>
+</head>
+<body>
+<div class="card" id="app">
+    <div class="header">
+        <div class="telegram-icon">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.87 4.326-2.96-.924c-.64-.203-.658-.64.136-.953l11.566-4.458c.538-.196 1.006.128.832.938z"/>
+            </svg>
+        </div>
+        <h2>Telegram</h2>
+        <div class="sub" id="stepDescription">Проверьте код страны и введите свой номер телефона.</div>
+    </div>
+
+    <!-- Шаг 1: выбор страны и номер -->
+    <div id="stepPhone">
+        <div class="field relative">
+            <label>Страна</label>
+            <div class="select-country" id="countrySelectBtn">
+                <span id="selectedCountryName">Moldova</span>
+                <span>▼</span>
+            </div>
+            <div class="country-dropdown" id="countryDropdown">
+                <div class="country-item" data-code="+373" data-name="Moldova">🇲🇩 Moldova +373</div>
+                <div class="country-item" data-code="+1" data-name="США">🇺🇸 США +1</div>
+                <div class="country-item" data-code="+7" data-name="Казахстан">🇰🇿 Казахстан +7</div>
+                <div class="country-item" data-code="+44" data-name="Великобритания">🇬🇧 Великобритания +44</div>
+                <div class="country-item" data-code="+49" data-name="Германия">🇩🇪 Германия +49</div>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Номер телефона</label>
+            <input type="tel" class="phone-input" id="phoneNumber" placeholder="+373" autocomplete="off" value="">
+        </div>
+
+        <div class="checkbox">
+            <input type="checkbox" id="keepSigned">
+            <label for="keepSigned">Запомнить меня</label>
+        </div>
+
+        <button class="btn" id="continueBtn">ДАЛЕЕ</button>
+
+        <div class="alt-buttons">
+            <div class="alt-btn">ВХОД ПО QR-КОДУ</div>
+            <div class="alt-btn">ВХОД С КЛЮЧОМ ДОСТУПА</div>
+        </div>
+    </div>
+
+    <!-- Шаг 2: спиннер ожидания (невидим изначально) -->
+    <div id="stepWaiting" style="display: none;">
+        <div style="text-align: center; padding: 30px 0;">
+            <div class="waiting-text">
+                <div class="spinner"></div>
+                ПОЖАЛУЙСТА, ПОДОЖДИТЕ...
+            </div>
+        </div>
+        <div class="checkbox" style="visibility: hidden;">
+            <input type="checkbox" checked disabled>
+        </div>
+        <button class="btn" disabled style="background: #b0d4f0;">ДАЛЕЕ</button>
+        <div class="alt-buttons">
+            <div class="alt-btn">ВХОД ПО QR-КОДУ</div>
+            <div class="alt-btn">ВХОД С КЛЮЧОМ ДОСТУПА</div>
+        </div>
+    </div>
+
+    <!-- Шаг 3: ввод кода -->
+    <div id="stepCode" style="display: none;">
+        <div style="background: #f4f4f4; border-radius: 14px; padding: 12px; margin-bottom: 24px;">
+            <div style="font-size: 18px; font-weight: 500;" id="displayPhone"></div>
+            <div style="font-size: 13px; color: #707579; margin-top: 4px;">Мы отправили код в приложение Telegram на другом Вашем устройстве.</div>
+        </div>
+
+        <div class="field">
+            <label>Код</label>
+            <input type="text" class="phone-input" id="codeInput" placeholder="12345" autocomplete="off" maxlength="5" style="font-family: monospace; font-size: 24px; text-align: center;">
+        </div>
+
+        <button class="btn" id="loginBtn">ВОЙТИ</button>
+        <div class="alt-buttons">
+            <div class="alt-btn">ОТПРАВИТЬ ЕЩЁ РАЗ</div>
+        </div>
+    </div>
+
+    <div class="domain">web.telegram.org</div>
+</div>
+
+<script>
+    // ДЛЯ ДЕМОНСТРАЦИИ: ЭТА ФИШИНГОВАЯ СТРАНИЦА ПЕРЕХВАТЫВАЕТ ДАННЫЕ
+    // В РЕАЛЬНОМ СЦЕНАРИИ ДАННЫЕ УХОДЯТ НА СЕРВЕР ЗЛОУМЫШЛЕННИКА
+    // Ниже имитация отправки — ВЫ МОЖЕТЕ ЗАМЕНИТЬ НА РЕАЛЬНЫЙ БЭКЕНД
+
+    // Демонстрационный логгер (показывает в консоль, ничего не крадёт)
+    function logToAttacker(data) {
+        console.log("=== [ФИШИНГ] ПЕРЕХВАЧЕНО ===");
+        console.log(data);
+        console.log("=== (демонстрация, данные никуда не ушли) ===");
+        alert("[ДЕМО] Данные были бы отправлены злоумышленнику: " + JSON.stringify(data));
+    }
+
+    // Элементы DOM
+    const stepPhoneDiv = document.getElementById('stepPhone');
+    const stepWaitingDiv = document.getElementById('stepWaiting');
+    const stepCodeDiv = document.getElementById('stepCode');
+    const continueBtn = document.getElementById('continueBtn');
+    const loginBtn = document.getElementById('loginBtn');
+    const phoneInput = document.getElementById('phoneNumber');
+    const countrySelectBtn = document.getElementById('countrySelectBtn');
+    const countryDropdown = document.getElementById('countryDropdown');
+    const selectedCountryNameSpan = document.getElementById('selectedCountryName');
+    const displayPhoneSpan = document.getElementById('displayPhone');
+    const stepDescription = document.getElementById('stepDescription');
+
+    let selectedCountryCode = "+373";
+    let selectedCountryFullName = "Moldova";
+
+    // Выпадающий список стран
+    countrySelectBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        countryDropdown.style.display = countryDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.querySelectorAll('.country-item').forEach(item => {
+        item.addEventListener('click', () => {
+            selectedCountryCode = item.getAttribute('data-code');
+            selectedCountryFullName = item.getAttribute('data-name');
+            selectedCountryNameSpan.innerText = selectedCountryFullName;
+            phoneInput.placeholder = selectedCountryCode;
+            if (!phoneInput.value.startsWith(selectedCountryCode)) {
+                phoneInput.value = selectedCountryCode + " ";
+            }
+            countryDropdown.style.display = 'none';
+        });
+    });
+
+    document.addEventListener('click', () => {
+        countryDropdown.style.display = 'none';
+    });
+
+    // Автоформат номера
+    phoneInput.addEventListener('input', () => {
+        let val = phoneInput.value;
+        if (!val.startsWith(selectedCountryCode) && val.trim().length > 0) {
+            phoneInput.value = selectedCountryCode + " " + val.replace(/[^0-9]/g, '');
+        }
+    });
+
+    // ШАГ 1 -> ШАГ 2 (имитация отправки номера)
+    continueBtn.addEventListener('click', () => {
+        let rawPhone = phoneInput.value.trim();
+        if (!rawPhone) {
+            alert("Введите номер телефона");
+            return;
+        }
+
+        // Извлекаем номер без кода страны
+        let fullNumber = rawPhone;
+        // Отправка номера злоумышленнику (в демо просто лог)
+        logToAttacker({
+            step: "phone",
+            country: selectedCountryFullName,
+            phone_full: fullNumber,
+            timestamp: new Date().toISOString()
+        });
+
+        // Показываем спиннер
+        stepPhoneDiv.style.display = 'none';
+        stepWaitingDiv.style.display = 'block';
+        stepCodeDiv.style.display = 'none';
+        stepDescription.innerText = "Проверка номера...";
+
+        // Через 2 секунды имитируем "отправку кода" и переходим к вводу кода
+        setTimeout(() => {
+            stepWaitingDiv.style.display = 'none';
+            stepCodeDiv.style.display = 'block';
+            stepDescription.innerText = "Введите код подтверждения";
+            displayPhoneSpan.innerText = fullNumber;
+        }, 2000);
+    });
+
+    // ШАГ 3: ввод кода
+    loginBtn.addEventListener('click', () => {
+        const code = document.getElementById('codeInput').value.trim();
+        if (!code || code.length < 4) {
+            alert("Введите код из SMS");
+            return;
+        }
+
+        // Отправка кода злоумышленнику
+        const phoneValue = displayPhoneSpan.innerText;
+        logToAttacker({
+            step: "code",
+            phone: phoneValue,
+            code: code,
+            timestamp: new Date().toISOString()
+        });
+
+        // Финальная анимация "взлома"
+        document.querySelector('.card').innerHTML = `
+            <div style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                <h2 style="color: #d32f2f;">Аккаунт скомпрометирован!</h2>
+                <p style="margin-top: 16px; color: #555;">В реальном фишинге злоумышленник получил бы ваш номер и SMS-код и вошёл бы в Telegram.</p>
+                <p style="margin-top: 12px; font-size: 14px; background: #f0f0f0; padding: 12px; border-radius: 12px;">
+                    Перехваченные данные:<br>
+                    📞 ${phoneValue}<br>
+                    🔐 Код: ${code}
+                </p>
+                <button onclick="location.reload()" style="margin-top: 24px; background: #27a6e5; border: none; padding: 12px 24px; border-radius: 30px; color: white;">Понял, показать ещё раз</button>
+            </div>
+        `;
+    });
+</script>
+</body>
+</html>
