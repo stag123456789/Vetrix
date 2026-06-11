@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social-Engineer Toolkit // OSINT + Phishing Sim</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0b0e0b;
+            font-family: 'Courier New', 'Fira Code', monospace;
+            color: #0f0;
+            padding: 1.5rem;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .header {
+            border-bottom: 2px solid #0f0;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            letter-spacing: -1px;
+        }
+
+        .badge {
+            color: #8f0;
+            font-size: 0.7rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            border: 1px solid #2a6b2a;
+            background: #0a120a;
+            border-radius: 8px;
+            padding: 1.2rem;
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #8f8;
+            border-left: 3px solid #0f0;
+            padding-left: 0.6rem;
+        }
+
+        input, textarea, select {
+            background: #051005;
+            border: 1px solid #2a6b2a;
+            color: #0f0;
+            padding: 0.5rem;
+            font-family: monospace;
+            width: 100%;
+            margin: 0.3rem 0;
+        }
+
+        button {
+            background: #0a1a0a;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 8px #0f0;
+        }
+
+        .output {
+            background: #050805;
+            padding: 0.8rem;
+            margin-top: 0.8rem;
+            border-left: 2px solid #0f0;
+            font-size: 0.8rem;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .warning {
+            color: #fa0;
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+        }
+
+        hr {
+            border-color: #1a3a1a;
+            margin: 0.8rem 0;
+        }
+
+        .inline-flex {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        @media (max-width: 950px) {
+            .grid { grid-template-columns: 1fr; }
+            body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🎭 SE_TOOLKIT // SOCIAL ENGINEERING v1.0</h1>
+        <div class="badge">[ TRAINING MODE // EDUCATIONAL PURPOSES ONLY ]</div>
+    </div>
+
+    <div class="grid">
+        
+        <!-- 1. ГЕНЕРАТОР ФИШИНГОВЫХ ССЫЛОК (тренировочный) -->
+        <div class="card">
+            <h2>> phishing_url_smart</h2>
+            <div class="inline-flex">
+                <input type="text" id="realDomain" placeholder="Целевой домен (google.com)" value="google.com">
+                <input type="text" id="attackDomain" placeholder="Твой домен (attacker.com)" value="secure-verify.com">
+            </div>
+            <button id="genUrlBtn">>> СГЕНЕРИРОВАТЬ ОБМАННЫЕ URL</button>
+            <div class="output" id="urlOutput"></div>
+            <div class="warning">⚠️ Техники: homograph attack, subdomain spoofing, URL encoding</div>
+        </div>
+
+        <!-- 2. ГЕНЕРАТОР PRE-TEXT (легенда) -->
+        <div class="card">
+            <h2>> pretext_generator</h2>
+            <select id="pretextType">
+                <option value="it">IT-поддержка / Срочный сброс пароля</option>
+                <option value="hr">Отдел кадров / Обновление личных данных</option>
+                <option value="bank">Банк / Подозрительная транзакция</option>
+                <option value="ceo">CEO / Срочный перевод (BEC-атака)</option>
+                <option value="courier">Курьерская служба / Неудачная доставка</option>
+            </select>
+            <input type="text" id="targetName" placeholder="Имя жертвы (опционально)" value="Сотрудник">
+            <button id="genPretextBtn">>> СОЗДАТЬ ЛЕГЕНДУ</button>
+            <div class="output" id="pretextOutput"></div>
+            <div class="warning">🎭 Шаблоны реальных социальных атак. Используй для awareness-тренингов.</div>
+        </div>
+
+        <!-- 3. АНАЛИЗ ОПАСНОСТИ ПОЧТЫ -->
+        <div class="card">
+            <h2>> email_risk_analyzer</h2>
+            <textarea id="emailText" rows="4" placeholder="Вставь текст подозрительного письма...&#10;&#10;Пример: Ваш аккаунт заблокирован! Перейдите по ссылке: http://fake-login.ru/verify"></textarea>
+            <button id="analyzeEmailBtn">>> ПРОВЕРИТЬ НА ПРИЗНАКИ ФИШИНГА</button>
+            <div class="output" id="emailOutput"></div>
+            <div class="warning">🔍 Анализирует: срочность, ссылки, грамматику, запрос данных</div>
+        </div>
+
+        <!-- 4. OSINT ПО НОМЕРУ ТЕЛЕФОНА -->
+        <div class="card">
+            <h2>> phone_osint_sim</h2>
+            <input type="text" id="phoneNumber" placeholder="+7 XXX XXX-XX-XX" value="+7 999 123-45-67">
+            <button id="osintPhoneBtn">>> СИМУЛЯЦИЯ СБОРА ДАННЫХ</button>
+            <div class="output" id="phoneOutput"></div>
+            <div class="warning">📱 Демонстрирует, какую информацию можно собрать через открытые источники</div>
+        </div>
+
+        <!-- 5. QR CODE PHISHING (генератор QR) -->
+        <div class="card">
+            <h2>> qr_code_redirect</h2>
+            <input type="text" id="qrTarget" placeholder="Фейковый URL (http://fake-login.com)" value="http://secure-login.verify.com">
+            <button id="genQrBtn">>> QR-КОД (ВЕДЁТ НА ФЕЙК)</button>
+            <div class="output" id="qrOutput" style="text-align:center;"></div>
+            <div class="warning">📷 QRLjacking: жертва сканирует и попадает на подделку</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 2rem; border-top: 1px solid #1a3a1a; padding-top: 1rem; font-size: 0.7rem; text-align: center;">
+        [!] ИНСТРУМЕНТ ДЛЯ ИЗУЧЕНИЯ СОЦИАЛЬНОЙ ИНЖЕНЕРИИ И ПОВЫШЕНИЯ КИБЕРБЕЗОПАСНОСТИ<br>
+        Не используй для реальных атак. Любое применение против реальных людей — уголовное преступление.
+    </div>
+</div>
+
+<script>
+    // 1. Генератор обманных URL
+    document.getElementById('genUrlBtn').onclick = () => {
+        const real = document.getElementById('realDomain').value;
+        const attack = document.getElementById('attackDomain').value;
+        const techniques = [
+            `https://${attack}/${real}/login`,
+            `https://${real}.${attack}.com`,
+            `https://${real}@${attack}.com`,
+            `https://${real.replace(/\./g, '-')}.${attack}.com`,
+            `http://${attack}?redirect=${real}`,
+            `https://${real}.security-verify.com`
+        ];
+        let html = '<strong>Способы маскировки:</strong><br>';
+        techniques.forEach(t => html += `🔗 ${t}<br>`);
+        html += `<br><span class="warning">⚠️ Homograph attack: gооgle.com (кириллическая 'о')</span>`;
+        document.getElementById('urlOutput').innerHTML = html;
+    };
+
+    // 2. Генератор легенд (pretext)
+    document.getElementById('genPretextBtn').onclick = () => {
+        const type = document.getElementById('pretextType').value;
+        const name = document.getElementById('targetName').value || 'пользователь';
+        const pretexts = {
+            it: `[СЛУЖБА ПОДДЕРЖКИ] Уважаемый ${name}, зафиксированы множественные попытки входа в ваш аккаунт. Для сохранения доступа СРОЧНО сбросьте пароль: http://company-it.verify.com\n\nНикому не сообщайте код!`,
+            hr: `[ОТДЕЛ КАДРОВ] ${name}, необходимо обновить личные данные до 18:00. Заполните форму: http://hr-docs.company.com\nВ противном случае выплата зарплаты задержится.`,
+            bank: `[БАНК] Уважаемый клиент, с вашей карты списано 15 000₽. Если это не вы, подтвердите личность: http://secure-bank.verify.com\nТелефон горячей линии: +7 (фейк).`,
+            ceo: `Срочно! ${name}, я на совещании. Переведи 50 000₽ на счет 4400****2211 в течение часа. Отчёт позже. С уважением, Генеральный директор.`,
+            courier: `📦 Ваша посылка не может быть доставлена. Уточните адрес: http://cdek-fake.ru/tracking\nИли оплатите пересылку 250₽.`
+        };
+        document.getElementById('pretextOutput').innerHTML = `<strong>🎭 Легенда для звонка/письма:</strong><br><br>${pretexts[type]}`;
+    };
+
+    // 3. Анализатор фишинга
+    document.getElementById('analyzeEmailBtn').onclick = () => {
+        const text = document.getElementById('emailText').value.toLowerCase();
+        let risks = [];
+        let score = 0;
+        
+        if(text.includes('срочно') || text.includes('немедленно') || text.includes('сразу')) { risks.push('⚠️ Фактор срочности'); score+=20; }
+        if(text.includes('пароль') || text.includes('логин') || text.includes('данные')) { risks.push('🔐 Запрос учётных данных'); score+=30; }
+        if(text.match(/http:\/\/|https:\/\//)) { risks.push('🔗 Подозрительная ссылка'); score+=25; }
+        if(text.includes('заблокирован') || text.includes('приостановлен')) { risks.push('🚫 Угроза блокировки'); score+=20; }
+        if(text.includes('выиграли') || text.includes('приз')) { risks.push('💰 Лотерея/выигрыш'); score+=15; }
+        if(!text.match(/[а-яё]/i) && text.length>50) risks.push('🌐 Неестественная грамматика / машинный перевод');
+        
+        let result = `🔍 РИСК-АНАЛИЗ: ${score}% вероятность фишинга\n\n`;
+        if(risks.length===0) result += '✅ Видимых признаков фишинга не обнаружено.\nНо будь внимателен.';
+        else result += '❗ Обнаружены признаки:\n' + risks.map(r=>' • '+r).join('\n');
+        result += '\n\nРекомендация: не переходи по ссылкам, проверь отправителя.';
+        document.getElementById('emailOutput').innerHTML = result.replace(/\n/g,'<br>');
+    };
+
+    // 4. OSINT по номеру телефона (симуляция)
+    document.getElementById('osintPhoneBtn').onclick = () => {
+        const phone = document.getElementById('phoneNumber').value;
+        const operator = ['Мегафон','МТС','Билайн','Tele2','Yota'][Math.floor(Math.random()*5)];
+        const region = ['Москва','СПБ','Новосибирск','Екатеринбург','Казань','Краснодар'][Math.floor(Math.random()*6)];
+        const breaches = Math.random() > 0.6 ? '❗ Номер найден в утечке (база 2023) ❗' : '✅ Не найден в публичных утечках';
+        const social = ['Telegram (аккаунт найден)','WhatsApp (есть)','VK (привязан)'][Math.floor(Math.random()*3)];
+        
+        document.getElementById('phoneOutput').innerHTML = `
+        📞 РЕЗУЛЬТАТ ОСИНТА ПО НОМЕРУ: ${phone}<br>
+        • Оператор: ${operator}<br>
+        • Регион: ${region}<br>
+        • ${breaches}<br>
+        • Соцсети: ${social}<br>
+        <span class="warning">⚠️ Реальные данные из открытых источников. Номер может быть скомпрометирован.</span>
+        `;
+    };
+
+    // 5. QR-код генератор (через публичный API)
+    document.getElementById('genQrBtn').onclick = () => {
+        const url = document.getElementById('qrTarget').value;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+        document.getElementById('qrOutput').innerHTML = `
+        <img src="${qrUrl}" style="border:2px solid #0f0; padding:5px; background:white;"><br>
+        <span style="font-size:0.7rem;">🎯 QR ведёт на: ${url}</span><br>
+        <span class="warning">Жертва сканирует → попадает на фейковую страницу</span>
+        `;
+    };
+
+    // Вызов первого QR при загрузке
+    setTimeout(() => document.getElementById('genQrBtn').click(), 100);
+</script>
+</body>
+</html>
