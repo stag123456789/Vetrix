@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Stealer для Redmi</title>
+    <style>
+        body {
+            background: #000;
+            font-family: monospace;
+            color: #0f0;
+            padding: 20px;
+        }
+        input, button {
+            background: #0a0f0a;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 12px;
+            font-family: monospace;
+            margin: 8px 0;
+            width: 100%;
+        }
+        button {
+            cursor: pointer;
+        }
+        .qr-box {
+            text-align: center;
+            margin-top: 20px;
+        }
+        img {
+            background: white;
+            padding: 10px;
+            border-radius: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h2>📷 Генератор QR для Redmi</h2>
+    <p>IP твоего iPhone (из iSH):</p>
+    <input type="text" id="ipInput" placeholder="192.168.x.x">
+    <p>Порт (по умолчанию 8080):</p>
+    <input type="text" id="portInput" value="8080">
+    <button id="genBtn">Создать QR</button>
+    <div id="qrArea" class="qr-box" style="display:none;">
+        <img id="qrImg">
+        <button id="downloadBtn">Сохранить QR</button>
+    </div>
+    <script>
+        document.getElementById('genBtn').onclick = () => {
+            let ip = document.getElementById('ipInput').value.trim();
+            let port = document.getElementById('portInput').value.trim();
+            if (!ip) return;
+            let url = `http://${ip}:${port}/`;
+            let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`;
+            document.getElementById('qrImg').src = qrUrl;
+            document.getElementById('qrArea').style.display = 'block';
+            document.getElementById('downloadBtn').onclick = () => {
+                let link = document.createElement('a');
+                link.download = 'stealer_qr.png';
+                link.href = qrUrl;
+                link.click();
+            };
+        };
+    </script>
+</body>
+</html>
