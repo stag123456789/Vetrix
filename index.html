@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>QR_BUILDER // жёсткий генератор</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0f0a;
+            font-family: 'Courier New', 'Fira Code', monospace;
+            padding: 20px;
+            color: #0f0;
+        }
+        .container {
+            max-width: 550px;
+            margin: 0 auto;
+        }
+        .title {
+            font-size: 24px;
+            border-left: 5px solid #0f0;
+            padding-left: 14px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 2px #0f0;
+        }
+        .card {
+            background: #0a120a;
+            border: 1px solid #1f4f1f;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .type-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .type-btn {
+            background: #0a1a0a;
+            border: 1px solid #2a6b2a;
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.1s;
+            color: #0f0;
+        }
+        .type-btn.active {
+            background: #0f0;
+            color: #000;
+            border-color: #0f0;
+            box-shadow: 0 0 8px #0f0;
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 5px;
+            color: #6a6;
+        }
+        input, textarea {
+            width: 100%;
+            background: #030803;
+            border: 1px solid #2a6b2a;
+            color: #0f0;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 14px;
+            border-radius: 12px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        button {
+            background: #0f1f0f;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 12px 20px;
+            font-weight: bold;
+            font-family: monospace;
+            border-radius: 60px;
+            width: 100%;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        button:active {
+            background: #0f0;
+            color: #000;
+        }
+        .qr-result {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: #050a05;
+            border-radius: 20px;
+            display: none;
+        }
+        .qr-result img {
+            max-width: 100%;
+            width: 220px;
+            height: auto;
+            background: white;
+            padding: 12px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+        }
+        .download-btn {
+            background: #1a2a1a;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        .preview-text {
+            font-size: 10px;
+            word-break: break-all;
+            background: #0a0f0a;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+            color: #6a6;
+        }
+        .footer {
+            font-size: 9px;
+            text-align: center;
+            color: #364d36;
+            margin-top: 20px;
+        }
+        hr {
+            border-color: #1f3a1f;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="title">
+        🖤 QR_BUILDER<br>
+        <span style="font-size: 12px;">[ генератор опасных QR ]</span>
+    </div>
+
+    <div class="card">
+        <div class="type-selector" id="typeSelector">
+            <div class="type-btn" data-type="url">🔗 URL</div>
+            <div class="type-btn" data-type="tel">📞 ТЕЛЕФОН</div>
+            <div class="type-btn" data-type="wifi">📡 WIFI</div>
+            <div class="type-btn" data-type="text">📝 ТЕКСТ</div>
+            <div class="type-btn" data-type="mail">✉️ EMAIL</div>
+        </div>
+
+        <!-- Динамическая форма -->
+        <div id="formContainer"></div>
+
+        <button id="generateBtn">⚡ СОЗДАТЬ QR-КОД</button>
+
+        <div class="qr-result" id="qrResult">
+            <div id="qrImage"></div>
+            <button id="downloadBtn" class="download-btn">💾 СОХРАНИТЬ QR (PNG)</button>
+            <div class="preview-text" id="previewPayload"></div>
+        </div>
+    </div>
+    <div class="footer">
+        ⚡ Создавай QR для любых целей: WiFi фишинг, телефонные атаки, ссылки<br>
+        Работает полностью офлайн (QR через API)
+    </div>
+</div>
+
+<script>
+    // библиотека для генерации QR (используем быстрый API)
+    let currentType = 'url';
+    let currentFormData = {};
+
+    // рендер формы в зависимости от типа
+    function renderForm() {
+        const container = document.getElementById('formContainer');
+        if (currentType === 'url') {
+            container.innerHTML = `
+                <div class="input-group">
+                    <label>🔗 ССЫЛКА (http:// или https://)</label>
+                    <input type="text" id="urlInput" placeholder="https://evil.com/login" value="https://example.com">
+                </div>
+            `;
+        } else if (currentType === 'tel') {
+            container.innerHTML = `
+                <div class="input-group">
+                    <label>📞 НОМЕР ТЕЛЕФОНА (международный формат)</label>
+                    <input type="tel" id="telInput" placeholder="+79991234567" value="+79991234567">
+                </div>
+                <div class="input-group">
+                    <label>💬 ДОП. ТЕКСТ (опционально, будет в QR)</label>
+                    <input type="text" id="telText" placeholder="Позвоните для верификации">
+                </div>
+            `;
+        } else if (currentType === 'wifi') {
+            container.innerHTML = `
+                <div class="input-group">
+                    <label>📡 ИМЯ СЕТИ (SSID)</label>
+                    <input type="text" id="wifiSsid" placeholder="Free_WiFi" value="Free_Public_WiFi">
+                </div>
+                <div class="input-group">
+                    <label>🔑 ПАРОЛЬ (WPA/WPA2)</label>
+                    <input type="text" id="wifiPass" placeholder="пароль" value="12345678">
+                </div>
+                <div class="input-group">
+                    <label>🔒 ШИФРОВАНИЕ (WPA/WEP/nopass)</label>
+                    <select id="wifiEnc" style="width:100%; background:#030803; border:1px solid #2a6b2a; color:#0f0; padding:10px;">
+                        <option value="WPA">WPA/WPA2</option>
+                        <option value="WEP">WEP</option>
+                        <option value="nopass">Без пароля</option>
+                    </select>
+                </div>
+                <div class="preview-text" style="margin-top:6px;">⚠️ Предупреждение: такой QR при сканировании на iPhone предложит подключиться к сети автоматически</div>
+            `;
+        } else if (currentType === 'text') {
+            container.innerHTML = `
+                <div class="input-group">
+                    <label>📝 ЛЮБОЙ ТЕКСТ / СООБЩЕНИЕ</label>
+                    <textarea id="textInput" rows="3" placeholder="Введи текст, команду, вредоносный скрипт...">Взломан твой аккаунт! Перейди по ссылке</textarea>
+                </div>
+            `;
+        } else if (currentType === 'mail') {
+            container.innerHTML = `
+                <div class="input-group">
+                    <label>✉️ EMAIL ПОЛУЧАТЕЛЯ</label>
+                    <input type="email" id="mailTo" placeholder="victim@example.com" value="spam@example.com">
+                </div>
+                <div class="input-group">
+                    <label>📌 ТЕМА ПИСЬМА</label>
+                    <input type="text" id="mailSubject" placeholder="Срочно! Ваш пароль" value="Ваш аккаунт взломан">
+                </div>
+                <div class="input-group">
+                    <label>📄 ТЕЛО ПИСЬМА</label>
+                    <textarea id="mailBody" rows="3" placeholder="Текст сообщения...">Подтвердите вход: https://fake-login.com</textarea>
+                </div>
+            `;
+        }
+    }
+
+    // получить payload в зависимости от типа
+    function getPayload() {
+        if (currentType === 'url') {
+            let url = document.getElementById('urlInput')?.value.trim();
+            if (!url) url = 'https://example.com';
+            if (!url.startsWith('http')) url = 'https://' + url;
+            return url;
+        }
+        else if (currentType === 'tel') {
+            let phone = document.getElementById('telInput')?.value.trim();
+            let extra = document.getElementById('telText')?.value.trim();
+            if (!phone) phone = '+70000000000';
+            if (extra) return `tel:${phone}\n${extra}`;
+            return `tel:${phone}`;
+        }
+        else if (currentType === 'wifi') {
+            let ssid = document.getElementById('wifiSsid')?.value.trim() || 'WiFi';
+            let pass = document.getElementById('wifiPass')?.value.trim() || '';
+            let enc = document.getElementById('wifiEnc')?.value || 'WPA';
+            if (enc === 'nopass') return `WIFI:T:nopass;S:${ssid};;`;
+            return `WIFI:T:${enc};S:${ssid};P:${pass};;`;
+        }
+        else if (currentType === 'text') {
+            let txt = document.getElementById('textInput')?.value.trim();
+            return txt || 'empty text';
+        }
+        else if (currentType === 'mail') {
+            let to = document.getElementById('mailTo')?.value.trim() || '';
+            let subject = encodeURIComponent(document.getElementById('mailSubject')?.value.trim() || '');
+            let body = encodeURIComponent(document.getElementById('mailBody')?.value.trim() || '');
+            return `mailto:${to}?subject=${subject}&body=${body}`;
+        }
+        return 'https://example.com';
+    }
+
+    // обновить QR картинку
+    async function updateQR() {
+        const payload = getPayload();
+        if (!payload) return;
+        
+        // используем бесплатный API qrserver (работает офлайн через интернет)
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(payload)}`;
+        const resultDiv = document.getElementById('qrResult');
+        const qrImageDiv = document.getElementById('qrImage');
+        const previewDiv = document.getElementById('previewPayload');
+        
+        qrImageDiv.innerHTML = `<img src="${qrUrl}" alt="QR Code" id="qrImgTag">`;
+        previewDiv.innerHTML = `📦 PAYLOAD: ${payload.length > 100 ? payload.substring(0,100)+'…' : payload}`;
+        resultDiv.style.display = 'block';
+        
+        // подготовка к скачиванию
+        const imgTag = document.getElementById('qrImgTag');
+        if (imgTag) {
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.onclick = () => {
+                const link = document.createElement('a');
+                link.download = `qr_${currentType}.png`;
+                link.href = qrUrl;
+                link.click();
+            };
+        }
+    }
+
+    // инициализация
+    function init() {
+        renderForm();
+        // переключение типов
+        const btns = document.querySelectorAll('.type-btn');
+        btns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentType = btn.getAttribute('data-type');
+                renderForm();
+                document.getElementById('qrResult').style.display = 'none';
+            });
+            if (btn.getAttribute('data-type') === 'url') btn.classList.add('active');
+        });
+        
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            updateQR();
+        });
+        
+        // предустановка
+        setTimeout(() => updateQR(), 100);
+    }
+    
+    init();
+</script>
+</body>
+</html>
