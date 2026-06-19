@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mina Randomizer</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .card {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 28px 20px 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.03);
+            transition: 0.2s;
+        }
+        h1 {
+            color: #e8edf5;
+            font-weight: 600;
+            font-size: 26px;
+            letter-spacing: -0.5px;
+            text-align: center;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        h1 span { background: #fbbf24; color: #0b0e1a; font-size: 16px; padding: 0 14px; border-radius: 40px; font-weight: 700; }
+        .balance-box {
+            background: #10141f;
+            border-radius: 60px;
+            padding: 14px 22px;
+            margin: 16px 0 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #2d3448;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.4);
+        }
+        .balance-label {
+            color: #8e98b3;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            font-size: 15px;
+        }
+        .balance-value {
+            color: #d6e0ff;
+            font-weight: 700;
+            font-size: 24px;
+            background: #1e253a;
+            padding: 4px 18px;
+            border-radius: 40px;
+            border: 1px solid #38405a;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            flex: 1;
+            background: #222a40;
+            border: none;
+            border-radius: 50px;
+            padding: 14px 8px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #c8d2f0;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 6px 0 #0d111b, 0 4px 12px rgba(0,0,0,0.4);
+            border-bottom: 1px solid #3f4866;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #0d111b; }
+        .btn-primary { background: #3b4bff; color: white; border-bottom-color: #5f70ff; box-shadow: 0 6px 0 #1a2399; }
+        .btn-danger { background: #b13e4b; color: white; border-bottom-color: #e05a6a; box-shadow: 0 6px 0 #721f29; }
+        .btn-success { background: #2b8c5e; color: white; border-bottom-color: #3eb37a; box-shadow: 0 6px 0 #165a3b; }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .input-row input {
+            flex: 1;
+            background: #121724;
+            border: 1px solid #2c344b;
+            border-radius: 60px;
+            padding: 14px 20px;
+            font-size: 16px;
+            color: #ecf2ff;
+            outline: none;
+            transition: 0.15s;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.6);
+        }
+        .input-row input:focus { border-color: #5f70ff; background: #181f30; }
+        .input-row input::placeholder { color: #5a6487; font-weight: 400; }
+        .input-row .btn { flex: 0 0 auto; padding: 14px 28px; }
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            color: #99a3c7;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 18px 6px 6px 6px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #262e45;
+            padding-bottom: 8px;
+        }
+        .item-list {
+            list-style: none;
+            margin-top: 4px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .item-list li {
+            background: #131a29;
+            border-radius: 40px;
+            padding: 12px 16px 12px 24px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #29314a;
+            transition: 0.1s;
+            color: #dce4ff;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        .item-list li:hover { background: #1c253b; border-color: #3d4870; }
+        .item-link {
+            color: #b6c2f0;
+            text-decoration: none;
+            font-size: 15px;
+            flex: 1;
+            margin-right: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .item-link:hover { color: white; }
+        .trash-btn {
+            background: none;
+            border: none;
+            color: #8f9bc7;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 30px;
+            transition: 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1e263c;
+            width: 36px;
+            height: 36px;
+        }
+        .trash-btn:hover { background: #b13e4b; color: white; }
+        .empty-state {
+            text-align: center;
+            color: #4a557a;
+            padding: 30px 0 16px;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+        }
+        .footer-meta {
+            text-align: center;
+            color: #3f4a6b;
+            font-size: 12px;
+            margin-top: 18px;
+            border-top: 1px solid #20273d;
+            padding-top: 16px;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #141b2b; border-radius: 20px; }
+        ::-webkit-scrollbar-thumb { background: #3f4b70; border-radius: 20px; }
+    </style>
+</head>
+<body>
+<div class="card" id="app">
+    <h1>
+        ⚡ MINA
+        <span>RND</span>
+    </h1>
+
+    <div class="balance-box">
+        <span class="balance-label">💰 Баланс</span>
+        <span class="balance-value" id="balanceDisplay">0</span>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-success" id="depositBtn">➕ Пополнить</button>
+        <button class="btn btn-danger" id="withdrawBtn">➖ Вывести</button>
+    </div>
+
+    <div class="input-row">
+        <input type="text" id="nameInput" placeholder="Название (например, ViceCream)" />
+        <button class="btn btn-primary" id="generateBtn">🎲 Сгенерить</button>
+    </div>
+
+    <div class="list-header">
+        <span>📋 Список</span>
+        <span style="opacity:0.6;">⚡ ссылка + рандом</span>
+    </div>
+
+    <ul class="item-list" id="itemList">
+        <li class="empty-state">Пока ничего нет</li>
+    </ul>
+    <div class="footer-meta">🔗 t.me/nft/name-рандом</div>
+</div>
+
+<script>
+    (function(){
+        // ----- состояние -----
+        let balance = 0;
+        // массив объектов { id, name, link }
+        let items = [];
+
+        // DOM-элементы
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const itemList = document.getElementById('itemList');
+        const nameInput = document.getElementById('nameInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const depositBtn = document.getElementById('depositBtn');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+
+        // ----- вспомогательные функции -----
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // генерация рандомного числа: от 100 до 9999 (можно менять)
+        function generateRandomSuffix() {
+            return randomInt(100, 9999);
+        }
+
+        // обновить отображение баланса
+        function updateBalanceUI() {
+            balanceDisplay.textContent = balance;
+        }
+
+        // отрисовать список
+        function renderList() {
+            itemList.innerHTML = '';
+            if (items.length === 0) {
+                itemList.innerHTML = '<li class="empty-state">✨ Добавьте название</li>';
+                return;
+            }
+            // отображаем в обратном порядке (новые сверху)
+            const reversed = [...items].reverse();
+            for (let item of reversed) {
+                const li = document.createElement('li');
+                // ссылка
+                const link = document.createElement('a');
+                link.className = 'item-link';
+                link.href = item.link;
+                link.target = '_blank';
+                link.textContent = item.link;
+                // кнопка корзины
+                const trashBtn = document.createElement('button');
+                trashBtn.className = 'trash-btn';
+                trashBtn.innerHTML = '🗑️';
+                trashBtn.setAttribute('aria-label', 'Удалить');
+                // при клике удаляем элемент по id
+                trashBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    removeItemById(item.id);
+                });
+
+                li.appendChild(link);
+                li.appendChild(trashBtn);
+                itemList.appendChild(li);
+            }
+        }
+
+        // удаление по id
+        function removeItemById(id) {
+            const index = items.findIndex(el => el.id === id);
+            if (index !== -1) {
+                items.splice(index, 1);
+                renderList();
+                // сохраняем в localStorage
+                saveToLocalStorage();
+            }
+        }
+
+        // добавить новый элемент
+        function addItem(name) {
+            if (!name.trim()) {
+                alert('Введите название!');
+                return false;
+            }
+            // генерируем суффикс
+            const suffix = generateRandomSuffix();
+            // формируем ссылку
+            const baseLink = `https://t.me/nft/${name.trim()}`;
+            const fullLink = `${baseLink}-${suffix}`;
+
+            // создаём объект
+            const newItem = {
+                id: Date.now() + Math.random() * 1000, // уникальный id
+                name: name.trim(),
+                link: fullLink
+            };
+            items.push(newItem);
+            renderList();
+            // очищаем поле
+            nameInput.value = '';
+            // сохраняем в localStorage
+            saveToLocalStorage();
+            return true;
+        }
+
+        // ----- работа с localStorage -----
+        function saveToLocalStorage() {
+            try {
+                const data = {
+                    balance: balance,
+                    items: items
+                };
+                localStorage.setItem('minaRandomizerData', JSON.stringify(data));
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const raw = localStorage.getItem('minaRandomizerData');
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                if (typeof data.balance === 'number') {
+                    balance = data.balance;
+                }
+                if (Array.isArray(data.items)) {
+                    // фильтруем, чтобы были корректные объекты
+                    items = data.items.filter(item => 
+                        item && typeof item === 'object' && item.id && item.link && typeof item.name === 'string'
+                    );
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // ----- обработчики кнопок -----
+        // пополнить баланс
+        function handleDeposit() {
+            const amount = prompt('Введите сумму для пополнения:', '100');
+            if (amount === null) return;
+            const val = parseInt(amount);
+            if (isNaN(val) || val <= 0) {
+                alert('Введите положительное число');
+                return;
+            }
+            balance += val;
+            updateBalanceUI();
+            saveToLocalStorage();
+        }
+
+        // вывести (уменьшить баланс)
+        function handleWithdraw() {
+            const amount = prompt('Введите сумму для вывода:', '50');
+            if (amount === null) return;
+            const val = parseInt(amount);
+            if (isNaN(val) || val <= 0) {
+                alert('Введите положительное число');
+                return;
+            }
+            if (val > balance) {
+                alert('Недостаточно средств!');
+                return;
+            }
+            balance -= val;
+            updateBalanceUI();
+            saveToLocalStorage();
+        }
+
+        // генерация (по кнопке или enter)
+        function handleGenerate() {
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('Введите название (например, ViceCream)');
+                return;
+            }
+            addItem(name);
+        }
+
+        // ----- инициализация -----
+        function init() {
+            // загружаем данные
+            const loaded = loadFromLocalStorage();
+            if (!loaded) {
+                // если нет данных — добавим пример
+                items = [
+                    { id: Date.now() + 1, name: 'ViceCream', link: 'https://t.me/nft/ViceCream-8423' },
+                    { id: Date.now() + 2, name: 'CyberPunk', link: 'https://t.me/nft/CyberPunk-5712' },
+                ];
+                balance = 250;
+                saveToLocalStorage();
+            }
+            // обновить UI
+            updateBalanceUI();
+            renderList();
+
+            // обработчики событий
+            generateBtn.addEventListener('click', handleGenerate);
+
+            // Enter в поле ввода
+            nameInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleGenerate();
+                }
+            });
+
+            depositBtn.addEventListener('click', handleDeposit);
+            withdrawBtn.addEventListener('click', handleWithdraw);
+        }
+
+        // старт
+        init();
+    })();
+</script>
+</body>
+</html>
