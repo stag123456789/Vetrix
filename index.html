@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💎 MINES - Galaxsys</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(ellipse at center, #0f0f1f 0%, #05050d 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+        }
+
+        .container {
+            max-width: 440px;
+            width: 100%;
+            background: linear-gradient(145deg, #16162e, #0a0a18);
+            border-radius: 28px;
+            padding: 20px 16px 24px;
+            border: 1px solid rgba(255,255,255,0.04);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+            position: relative;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+        .logo span {
+            color: #ffd93d;
+        }
+
+        .lang {
+            display: flex;
+            gap: 6px;
+            background: #0a0a18;
+            padding: 4px 8px;
+            border-radius: 20px;
+            border: 1px solid #1f1f3e;
+        }
+        .lang button {
+            background: none;
+            border: none;
+            color: #445577;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .lang button.active {
+            background: #3d5afe;
+            color: #fff;
+        }
+        .lang button:hover:not(.active) {
+            color: #8899bb;
+        }
+
+        .id-box {
+            color: #445577;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .id-box b {
+            color: #8899bb;
+        }
+
+        /* ===== BALANCE ===== */
+        .balance-section {
+            background: #0a0a18;
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border: 1px solid #1a1a36;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .balance-section .label {
+            color: #445577;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .balance-section .value {
+            color: #ffd93d;
+            font-size: 28px;
+            font-weight: 800;
+        }
+        .balance-section .value small {
+            font-size: 14px;
+            font-weight: 400;
+            color: #556688;
+        }
+
+        /* ===== STATS ===== */
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #0a0a18;
+            border-radius: 12px;
+            padding: 8px 14px;
+            margin-bottom: 10px;
+            border: 1px solid #1a1a36;
+        }
+        .stats .stat {
+            color: #667799;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .stats .stat b {
+            color: #dde4f0;
+            font-size: 16px;
+            margin-left: 4px;
+        }
+        .stats .stat .highlight {
+            color: #ffd93d;
+        }
+
+        /* ===== MINES COUNT ===== */
+        .mines-selector {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .mines-selector button {
+            flex: 1;
+            min-width: 40px;
+            padding: 6px 4px;
+            background: #0a0a18;
+            border: 2px solid #1a1a36;
+            border-radius: 10px;
+            color: #667799;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .mines-selector button.active {
+            border-color: #ffd93d;
+            color: #ffd93d;
+            background: #1a1a2e;
+        }
+        .mines-selector button:hover:not(.active) {
+            border-color: #333366;
+        }
+
+        /* ===== GRID ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            margin: 10px 0 14px;
+            aspect-ratio: 1;
+            max-width: 100%;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #1c1c3a, #10102a);
+            border-radius: 10px;
+            border: 2px solid #1f1f3e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.08s ease;
+            color: #aabbdd;
+            box-shadow: inset 0 -3px 0 #0a0a16;
+            position: relative;
+        }
+        .cell:active:not(.revealed):not(.disabled) {
+            transform: scale(0.92);
+        }
+        .cell.revealed {
+            background: #0a0a1a;
+            border-color: #2a2a52;
+            cursor: default;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+        }
+        .cell.mine {
+            background: #2a0a0a;
+            border-color: #661122;
+            color: #ff1744;
+        }
+        .cell.gem {
+            background: #0a1a0a;
+            border-color: #00c853;
+            color: #00e676;
+        }
+        .cell.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .cell .label {
+            font-size: 10px;
+            color: #334466;
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-weight: 400;
+        }
+        .cell[data-num="1"] { color: #4fc3f7; }
+        .cell[data-num="2"] { color: #81c784; }
+        .cell[data-num="3"] { color: #ff8a65; }
+        .cell[data-num="4"] { color: #ce93d8; }
+        .cell[data-num="5"] { color: #ef5350; }
+
+        /* ===== BET & CASHOUT ===== */
+        .bet-section {
+            display: flex;
+            gap: 8px;
+            margin: 8px 0 10px;
+            align-items: center;
+        }
+        .bet-section .bet-input {
+            flex: 1;
+            background: #0a0a18;
+            border: 2px solid #1a1a36;
+            border-radius: 40px;
+            padding: 10px 16px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffd93d;
+            outline: none;
+            min-width: 60px;
+        }
+        .bet-section .bet-input:focus {
+            border-color: #ffd93d;
+        }
+        .bet-section .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.4);
+            letter-spacing: 0.5px;
+            min-width: 80px;
+        }
+        .bet-section .btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+        }
+        .btn-bet {
+            background: linear-gradient(135deg, #3d5afe, #1a237e);
+            color: white;
+        }
+        .btn-cashout {
+            background: linear-gradient(135deg, #00c853, #1b5e20);
+            color: white;
+        }
+        .btn-cashout:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+        }
+        .btn-danger-sm {
+            background: #d32f2f;
+            color: white;
+            padding: 10px 14px;
+            min-width: 50px;
+        }
+
+        /* ===== NEXT WIN ===== */
+        .next-win {
+            text-align: center;
+            color: #445577;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 0 2px;
+        }
+        .next-win b {
+            color: #ffd93d;
+            font-size: 18px;
+        }
+
+        /* ===== HISTORY ===== */
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            color: #334466;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 12px;
+            padding: 4px 4px;
+            border-bottom: 1px solid #12122a;
+        }
+        .history-list {
+            max-height: 100px;
+            overflow-y: auto;
+            margin-top: 4px;
+            padding-right: 4px;
+        }
+        .history-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .history-list::-webkit-scrollbar-track {
+            background: #0a0a18;
+            border-radius: 10px;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: #1f1f3e;
+            border-radius: 10px;
+        }
+        .history-item {
+            background: #0a0a18;
+            border-radius: 20px;
+            padding: 4px 12px 4px 16px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #12122a;
+            font-size: 12px;
+            color: #8899bb;
+        }
+        .history-item .link {
+            color: #66bbff;
+            text-decoration: none;
+            font-weight: 500;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 8px;
+            font-size: 11px;
+        }
+        .history-item .trash {
+            background: none;
+            border: none;
+            color: #334466;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+        }
+        .history-item .trash:hover {
+            color: #ff1744;
+        }
+        .empty-state {
+            text-align: center;
+            color: #1a1a36;
+            padding: 10px 0;
+            font-size: 12px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 6px;
+            margin: 6px 0 2px;
+        }
+        .input-row input {
+            flex: 1;
+            background: #0a0a18;
+            border: 1px solid #1a1a36;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: #dde4f0;
+            outline: none;
+        }
+        .input-row input:focus {
+            border-color: #3d5afe;
+        }
+        .input-row input::placeholder {
+            color: #334466;
+        }
+        .input-row .btn {
+            flex: 0 0 auto;
+            padding: 6px 16px;
+            min-width: auto;
+            font-size: 12px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #1a1a36;
+            font-size: 10px;
+            margin-top: 10px;
+            border-top: 1px solid #0f0f22;
+            padding-top: 10px;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: #16162e;
+            padding: 28px 32px;
+            border-radius: 32px;
+            max-width: 340px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid #3a3a66;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.9);
+        }
+        .modal h2 {
+            font-size: 48px;
+            margin-bottom: 2px;
+        }
+        .modal .result {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 4px 0 2px;
+        }
+        .modal .result.win { color: #00e676; }
+        .modal .result.lose { color: #ff1744; }
+        .modal .detail {
+            color: #8899bb;
+            font-size: 14px;
+            margin: 2px 0 16px;
+        }
+        .modal .btn {
+            padding: 12px 40px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 800;
+            font-size: 15px;
+            cursor: pointer;
+            background: #3d5afe;
+            color: white;
+            box-shadow: 0 5px 0 #1a237e;
+            transition: 0.1s;
+        }
+        .modal .btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #1a237e;
+        }
+
+        .btn-warning {
+            background: #ffb300;
+            color: #0a0a18;
+            border-bottom: 2px solid #b26500;
+        }
+        .btn-success-sm {
+            background: #00c853;
+            color: white;
+            border-bottom: 2px solid #1b5e20;
+        }
+
+        .turbo-badge {
+            display: inline-block;
+            background: #ff1744;
+            color: white;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 1px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo">💎 MIN<span>ES</span></div>
+        <div class="lang">
+            <button class="active">🇬🇧 EN</button>
+            <button>🇷🇺 RU</button>
+        </div>
+        <div class="id-box">ID: <b>0</b></div>
+    </div>
+
+    <!-- BALANCE -->
+    <div class="balance-section">
+        <span class="label">💰 BALANCE</span>
+        <span class="value" id="balanceDisplay">1000 <small>FUN</small></span>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat">🎯 Next win: <b id="nextWinDisplay">0</b> FUN</div>
+        <div class="stat">💣 Mines: <b id="minesCountDisplay">3</b></div>
+    </div>
+
+    <!-- MINES SELECTOR -->
+    <div class="mines-selector" id="minesSelector">
+        <button data-mines="1">1</button>
+        <button data-mines="2">2</button>
+        <button data-mines="3" class="active">3</button>
+        <button data-mines="5">5</button>
+        <button data-mines="7">7</button>
+        <button data-mines="10">10</button>
+    </div>
+
+    <!-- GRID 5x5 -->
+    <div class="grid" id="grid"></div>
+
+    <!-- NEXT WIN DETAIL -->
+    <div class="next-win">
+        💰 <b id="winAmountDisplay">0</b> FUN at <b id="coefDisplay">1.00</b>x
+    </div>
+
+    <!-- BET & CASHOUT -->
+    <div class="bet-section">
+        <input type="number" class="bet-input" id="betInput" value="10" min="1" step="1">
+        <button class="btn btn-bet" id="betBtn">▶ BET</button>
+        <button class="btn btn-cashout" id="cashoutBtn" disabled>CASHOUT</button>
+    </div>
+
+    <!-- HISTORY INPUT -->
+    <div class="input-row">
+        <input type="text" id="nameInput" placeholder="Название (ViceCream)" />
+        <button class="btn btn-warning" id="addToListBtn">📋 Добавить</button>
+    </div>
+
+    <!-- HISTORY LIST -->
+    <div class="list-header">
+        <span>📌 Список ссылок</span>
+        <span>🗑️</span>
+    </div>
+    <div class="history-list" id="historyList">
+        <div class="empty-state">✦ Нет записей</div>
+    </div>
+
+    <div class="footer">⚡ t.me/nft/название-рандом</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <h2 id="modalEmoji">💎</h2>
+        <div class="result" id="modalResult">+0</div>
+        <div class="detail" id="modalDetail">Коэффициент: 1.00x</div>
+        <button class="btn" id="modalBtn">Продолжить</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ====== CONFIG ======
+        const SIZE = 5;
+        const TOTAL_CELLS = SIZE * SIZE;
+
+        // ====== STATE ======
+        let balance = 1000;
+        let history = [];
+        let grid = [];
+        let isMine = [];
+        let revealed = [];
+        let gameActive = false;
+        let gameStarted = false;
+        let currentBet = 10;
+        let minesCount = 3;
+        let revealedCount = 0;
+        let currentCoef = 1.00;
+        let winAmount = 0;
+
+        // коэффициенты для разных кол-ва мин (5x5)
+        const COEFS = {
+            1: [1.00, 1.20, 1.50, 1.90, 2.50, 3.50, 5.00, 7.50, 12.0, 20.0, 35.0, 60.0, 100.0, 180.0, 350.0, 600.0, 1000.0, 1800.0, 3500.0, 6000.0, 10000.0, 18000.0, 35000.0, 60000.0, 100000.0],
+            2: [1.00, 1.25, 1.60, 2.10, 2.80, 4.00, 5.80, 8.50, 13.0, 20.0, 32.0, 52.0, 85.0, 140.0, 240.0, 400.0, 680.0, 1150.0, 2000.0, 3500.0, 6000.0, 10500.0, 18500.0, 33000.0, 60000.0],
+            3: [1.00, 1.30, 1.70, 2.30, 3.20, 4.50, 6.50, 9.50, 14.5, 22.0, 35.0, 55.0, 88.0, 140.0, 230.0, 380.0, 630.0, 1050.0, 1800.0, 3100.0, 5400.0, 9500.0, 17000.0, 30000.0, 55000.0],
+            5: [1.00, 1.35, 1.85, 2.60, 3.70, 5.40, 8.00, 12.0, 18.5, 28.0, 44.0, 68.0, 108.0, 170.0, 270.0, 430.0, 690.0, 1100.0, 1800.0, 2900.0, 4700.0, 7600.0, 12500.0, 20500.0, 34000.0],
+            7: [1.00, 1.40, 2.00, 2.90, 4.30, 6.50, 10.0, 15.5, 24.0, 38.0, 60.0, 95.0, 150.0, 240.0, 380.0, 620.0, 1000.0, 1600.0, 2600.0, 4200.0, 6800.0, 11000.0, 18000.0, 30000.0, 50000.0],
+            10: [1.00, 1.50, 2.30, 3.50, 5.50, 8.50, 13.5, 21.0, 33.0, 52.0, 82.0, 130.0, 205.0, 330.0, 520.0, 820.0, 1300.0, 2100.0, 3400.0, 5400.0, 8700.0, 14000.0, 23000.0, 38000.0, 65000.0]
+        };
+
+        // ====== DOM ======
+        const gridEl = document.getElementById('grid');
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const nextWinDisplay = document.getElementById('nextWinDisplay');
+        const winAmountDisplay = document.getElementById('winAmountDisplay');
+        const coefDisplay = document.getElementById('coefDisplay');
+        const minesCountDisplay = document.getElementById('minesCountDisplay');
+        const betInput = document.getElementById('betInput');
+        const betBtn = document.getElementById('betBtn');
+        const cashoutBtn = document.getElementById('cashoutBtn');
+        const historyListEl = document.getElementById('historyList');
+        const nameInput = document.getElementById('nameInput');
+        const modal = document.getElementById('modal');
+        const modalEmoji = document.getElementById('modalEmoji');
+        const modalResult = document.getElementById('modalResult');
+        const modalDetail = document.getElementById('modalDetail');
+        const modalBtn = document.getElementById('modalBtn');
+
+        // ====== LOCAL STORAGE ======
+        function saveState() {
+            try {
+                localStorage.setItem('minesGalaxsysData', JSON.stringify({ balance, history }));
+            } catch(e) {}
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem('minesGalaxsysData');
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                if (typeof data.balance === 'number') balance = data.balance;
+                if (Array.isArray(data.history)) history = data.history.filter(h => h && h.id && h.link);
+                return true;
+            } catch(e) { return false; }
+        }
+
+        // ====== GRID ======
+        function initGrid() {
+            grid = [];
+            isMine = [];
+            revealed = [];
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                grid[i] = 0;
+                isMine[i] = false;
+                revealed[i] = false;
+            }
+            gameActive = false;
+            gameStarted = false;
+            revealedCount = 0;
+            currentCoef = 1.00;
+            winAmount = 0;
+            updateUI();
+            renderGrid();
+            betBtn.disabled = false;
+            betBtn.textContent = '▶ BET';
+            cashoutBtn.disabled = true;
+        }
+
+        function placeMines() {
+            for (let i = 0; i < TOTAL_CELLS; i++) isMine[i] = false;
+            let placed = 0;
+            while (placed < minesCount) {
+                const idx = Math.floor(Math.random() * TOTAL_CELLS);
+                if (!isMine[idx]) {
+                    isMine[idx] = true;
+                    placed++;
+                }
+            }
+            // считаем соседей
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                if (isMine[i]) { grid[i] = -1; continue; }
+                let count = 0;
+                const neighbors = getNeighbors(i);
+                for (const n of neighbors) {
+                    if (isMine[n]) count++;
+                }
+                grid[i] = count;
+            }
+        }
+
+        function getNeighbors(idx) {
+            const r = Math.floor(idx / SIZE);
+            const c = idx % SIZE;
+            const result = [];
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+                        result.push(nr * SIZE + nc);
+                    }
+                }
+            }
+            return result;
+        }
+
+        function renderGrid() {
+            gridEl.innerHTML = '';
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.idx = i;
+
+                if (revealed[i]) {
+                    cell.classList.add('revealed');
+                    if (isMine[i]) {
+                        cell.classList.add('mine');
+                        cell.textContent = '💣';
+                    } else if (grid[i] > 0) {
+                        cell.textContent = grid[i];
+                        cell.dataset.num = grid[i];
+                    } else {
+                        cell.textContent = '✦';
+                        cell.style.color = '#1a1a36';
+                    }
+                } else {
+                    if (gameActive && !gameStarted) {
+                        cell.textContent = '?';
+                        cell.style.color = '#334466';
+                    } else {
+                        cell.textContent = '';
+                    }
+                }
+
+                if (!gameActive || gameStarted || !gameStarted) {
+                    if (!gameActive || gameStarted) {
+                        cell.classList.add('disabled');
+                    }
+                }
+
+                cell.addEventListener('click', () => onCellClick(i));
+                gridEl.appendChild(cell);
+            }
+        }
+
+        // ====== GAME LOGIC ======
+        function startGame() {
+            const bet = parseInt(betInput.value);
+            if (isNaN(bet) || bet <= 0) {
+                alert('Введите корректную ставку!');
+                return;
+            }
+            if (bet > balance) {
+                alert('Недостаточно средств! Баланс: ' + balance);
+                return;
+            }
+
+            currentBet = bet;
+            balance -= bet;
+            updateBalance();
+            saveState();
+
+            initGrid();
+            placeMines();
+            gameActive = true;
+            gameStarted = false;
+            revealedCount = 0;
+            currentCoef = 1.00;
+            winAmount = 0;
+
+            betBtn.disabled = true;
+            betBtn.textContent = '⏳';
+            cashoutBtn.disabled = true;
+
+            renderGrid();
+            updateUI();
+        }
+
+        function onCellClick(idx) {
+            if (!gameActive || gameStarted) return;
+            if (revealed[idx]) return;
+
+            // первый клик
+            gameStarted = true;
+
+            // проверка на мину
+            if (isMine[idx]) {
+                revealed[idx] = true;
+                gameActive = false;
+                gameStarted = false;
+                // показываем все мины
+                for (let i = 0; i < TOTAL_CELLS; i++) {
+                    if (isMine[i]) revealed[i] = true;
+                }
+                renderGrid();
+                betBtn.disabled = false;
+                betBtn.textContent = '▶ BET';
+                cashoutBtn.disabled = true;
+                showResult(false, 0);
+                return;
+            }
+
+            // открываем клетку
+            revealCell(idx);
+            renderGrid();
+
+            // обновляем коэффициент
+            revealedCount++;
+            updateCoef();
+
+            // проверка победы (все безопасные клетки открыты)
+            const totalSafe = TOTAL_CELLS - minesCount;
+            if (revealedCount === totalSafe) {
+                gameActive = false;
+                gameStarted = false;
+                betBtn.disabled = false;
+                betBtn.textContent = '▶ BET';
+                cashoutBtn.disabled = true;
+                const win = Math.floor(currentBet * currentCoef);
+                balance += win;
+                updateBalance();
+                saveState();
+                showResult(true, win);
+                return;
+            }
+
+            // активируем кнопку CASHOUT
+            cashoutBtn.disabled = false;
+            updateUI();
+        }
+
+        function revealCell(idx) {
+            if (revealed[idx]) return;
+            if (isMine[idx]) return;
+            revealed[idx] = true;
+
+            if (grid[idx] === 0) {
+                const neighbors = getNeighbors(idx);
+                for (const n of neighbors) {
+                    if (!revealed[n] && !isMine[n]) {
+                        revealCell(n);
+                    }
+                }
+            }
+        }
+
+        function updateCoef() {
+            const safe = TOTAL_CELLS - minesCount;
+            const progress = revealedCount / safe;
+            const coefs = COEFS[minesCount] || COEFS[3];
+            const idx = Math.min(Math.floor(progress * (coefs.length - 1)), coefs.length - 1);
+            currentCoef = coefs[idx] || 1.00;
+            winAmount = Math.floor(currentBet * currentCoef);
+            updateUI();
+        }
+
+        function cashout() {
+            if (!gameActive || !gameStarted) return;
+            gameActive = false;
+            gameStarted = false;
+            balance += winAmount;
+            updateBalance();
+            saveState();
+            betBtn.disabled = false;
+            betBtn.textContent = '▶ BET';
+            cashoutBtn.disabled = true;
+            showResult(true, winAmount);
+        }
+
+        // ====== UI ======
+        function updateBalance() {
+            balanceDisplay.textContent = balance + ' FUN';
+        }
+
+        function updateUI() {
+            nextWinDisplay.textContent = winAmount;
+            winAmountDisplay.textContent = winAmount;
+            coefDisplay.textContent = currentCoef.toFixed(2);
+            minesCountDisplay.textContent = minesCount;
+        }
+
+        // ====== RESULT MODAL ======
+        function showResult(win, amount) {
+            modal.classList.add('show');
+            if (win) {
+                modalEmoji.textContent = '🎉';
+                modalResult.textContent = '+' + amount + ' FUN';
+                modalResult.className = 'result win';
+                modalDetail.textContent = 'Коэффициент: ' + currentCoef.toFixed(2) + 'x';
+            } else {
+                modalEmoji.textContent = '💥';
+                modalResult.textContent = '-' + currentBet + ' FUN';
+                modalResult.className = 'result lose';
+                modalDetail.textContent = 'Вы наступили на мину!';
+            }
+        }
+
+        modalBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            initGrid();
+            betBtn.disabled = false;
+            betBtn.textContent = '▶ BET';
+            cashoutBtn.disabled = true;
+            gameActive = false;
+            gameStarted = false;
+        });
+
+        // ====== MINES SELECTOR ======
+        document.querySelectorAll('#minesSelector button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (gameActive) {
+                    if (!confirm('Игра активна! Сменить количество мин?')) return;
+                }
+                document.querySelectorAll('#minesSelector button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                minesCount = parseInt(this.dataset.mines);
+                minesCountDisplay.textContent = minesCount;
+                if (!gameActive) {
+                    initGrid();
+                }
+            });
+        });
+
+        // ====== HISTORY ======
+        function renderHistory() {
+            historyListEl.innerHTML = '';
+            if (history.length === 0) {
+                historyListEl.innerHTML = '<div class="empty-state">✦ Нет записей</div>';
+                return;
+            }
+            const reversed = [...history].reverse();
+            for (const item of reversed) {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                const link = document.createElement('a');
+                link.className = 'link';
+                link.href = item.link;
+                link.target = '_blank';
+                link.textContent = item.link;
+                const trash = document.createElement('button');
+                trash.className = 'trash';
+                trash.textContent = '🗑️';
+                trash.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    history = history.filter(h => h.id !== item.id);
+                    renderHistory();
+                    saveState();
+                });
+                div.appendChild(link);
+                div.appendChild(trash);
+                historyListEl.appendChild(div);
+            }
+        }
+
+        function addHistory(name) {
+            if (!name.trim()) {
+                alert('Введите название!');
+                return false;
+            }
+            const suffix = Math.floor(Math.random() * 9000) + 1000;
+            const link = `https://t.me/nft/${name.trim()}-${suffix}`;
+            history.push({
+                id: Date.now() + Math.random() * 1000,
+                name: name.trim(),
+                link: link,
+            });
+            renderHistory();
+            saveState();
+            nameInput.value = '';
+            return true;
+        }
+
+        // ====== BUTTONS ======
+        betBtn.addEventListener('click', startGame);
+        cashoutBtn.addEventListener('click', cashout);
+
+        document.getElementById('addToListBtn').addEventListener('click', () => {
+            addHistory(nameInput.value);
+        });
+
+        nameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addHistory(nameInput.value);
+            }
+        });
+
+        // ====== INIT ======
+        loadState();
+        initGrid();
+        renderHistory();
+        updateBalance();
+        updateUI();
+        saveState();
+    })();
+</script>
+</body>
+</html>
