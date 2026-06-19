@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐔 Курица через дорогу — кошелёк + админка</title>
+    <style>
+        /* ===== СБРОС И БАЗА ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(145deg, #0b0e1a 0%, #1a1f33 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            padding: 16px;
+        }
+        .container {
+            background: #141b2b;
+            border-radius: 28px;
+            padding: 24px 22px;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+            border: 1px solid #2d3b5a;
+            backdrop-filter: blur(2px);
+        }
+        /* ===== ТЕКСТ ===== */
+        h1 {
+            color: #f25f7c;
+            font-size: 2.1rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 16px rgba(242, 95, 124, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .subtitle {
+            color: #8d99b5;
+            font-size: 0.95rem;
+            margin: 4px 0 18px 0;
+            opacity: 0.8;
+        }
+        /* ===== КАРТОЧКА БАЛАНСА ===== */
+        .balance-card {
+            background: linear-gradient(135deg, #0f172b, #1b2542);
+            border-radius: 20px;
+            padding: 20px 18px;
+            margin-bottom: 22px;
+            border: 1px solid #3a4a70;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+        }
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            top: -60%;
+            left: -60%;
+            width: 220%;
+            height: 220%;
+            background: radial-gradient(circle, rgba(242, 95, 124, 0.08) 0%, transparent 70%);
+            animation: spinGlow 14s linear infinite;
+        }
+        @keyframes spinGlow {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .balance-label {
+            color: #9aa3c1;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 2;
+        }
+        .balance-amount {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #6cf0b0;
+            margin: 4px 0 2px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 0 20px rgba(108, 240, 176, 0.25);
+            letter-spacing: 1px;
+        }
+        .balance-currency {
+            color: #7c86a8;
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 2;
+        }
+        .balance-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        /* ===== КНОПКИ ===== */
+        button,
+        .btn {
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s ease;
+            background: #2a3655;
+            color: white;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            letter-spacing: 0.3px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.15);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .btn-green {
+            background: linear-gradient(145deg, #2ddb8a, #1baa6b);
+            color: #0c1a1a;
+        }
+        .btn-yellow {
+            background: linear-gradient(145deg, #f6c44a, #e09d2a);
+            color: #1f1a0a;
+        }
+        .btn-red {
+            background: linear-gradient(145deg, #f25f7c, #c73b54);
+            color: white;
+        }
+        .btn-small {
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            background: #313f62;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #4b5b82;
+            color: #bcc6e2;
+            box-shadow: none;
+        }
+        /* ===== ИГРОВОЕ ПОЛЕ ===== */
+        .game-area {
+            background: #0f182a;
+            border-radius: 20px;
+            padding: 14px 12px 12px;
+            margin-bottom: 18px;
+            border: 1px solid #314268;
+            position: relative;
+            min-height: 200px;
+        }
+        .road {
+            background: #252f44;
+            height: 80px;
+            position: relative;
+            margin: 10px 0 16px;
+            border-top: 3px dashed #b0c4de;
+            border-bottom: 3px dashed #b0c4de;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6);
+        }
+        .road-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            border-top: 2.5px dashed #f7d44a;
+            transform: translateY(-50%);
+            opacity: 0.6;
+        }
+        .car {
+            position: absolute;
+            font-size: 28px;
+            will-change: transform;
+            animation: driveLeft linear infinite;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+        }
+        .car:nth-child(2) {
+            animation-duration: 3.8s;
+            top: 6px;
+            left: -40px;
+            animation-delay: 0.4s;
+        }
+        .car:nth-child(3) {
+            animation-duration: 4.6s;
+            top: 28px;
+            left: -80px;
+            animation-delay: 1.2s;
+        }
+        .car:nth-child(4) {
+            animation-duration: 3.2s;
+            top: 52px;
+            left: -20px;
+            animation-delay: 2s;
+        }
+        @keyframes driveLeft {
+            0% {
+                transform: translateX(0);
+                left: 110%;
+            }
+            100% {
+                transform: translateX(0);
+                left: -10%;
+            }
+        }
+        .chicken {
+            font-size: 44px;
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: top 0.08s linear;
+            cursor: pointer;
+            user-select: none;
+            z-index: 15;
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+            line-height: 1;
+        }
+        .chicken:hover {
+            transform: translateX(-50%) scale(1.08);
+        }
+        .chicken.disabled {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        .finish-flag {
+            font-size: 26px;
+            margin-top: 2px;
+            text-align: center;
+            color: #f7d44a;
+        }
+        .score {
+            color: #b7c4e6;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 8px 0 4px;
+            background: #1b253f;
+            padding: 6px 10px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        .crash-effect {
+            animation: crashShake 0.5s ease;
+        }
+        @keyframes crashShake {
+            0%,
+            100% {
+                transform: translateX(-50%) rotate(0deg);
+            }
+            25% {
+                transform: translateX(-50%) rotate(18deg) scale(1.3);
+            }
+            50% {
+                transform: translateX(-50%) rotate(-18deg) scale(0.8);
+            }
+            75% {
+                transform: translateX(-50%) rotate(10deg) scale(1.1);
+            }
+        }
+        /* ===== РАНДОМАЙЗЕР ===== */
+        .randomizer-section {
+            background: #111b30;
+            border-radius: 20px;
+            padding: 18px 16px 20px;
+            margin: 18px 0 14px;
+            border: 1px solid #f25f7c55;
+        }
+        .randomizer-title {
+            color: #f25f7c;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .input-group input {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 14px;
+            border-radius: 30px;
+            border: 1.5px solid #314268;
+            background: #0e1729;
+            color: #ebf0fa;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.2s;
+        }
+        .input-group input:focus {
+            border-color: #f25f7c;
+            box-shadow: 0 0 0 3px rgba(242, 95, 124, 0.2);
+        }
+        .result {
+            background: #0d1629;
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-top: 12px;
+            color: #6cf0b0;
+            font-weight: 600;
+            word-break: break-all;
+            border: 1px solid #2dbb80;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.15s;
+            min-height: 52px;
+        }
+        .result:hover {
+            background: #14203b;
+            border-color: #6cf0b0;
+        }
+        .copy-hint {
+            color: #6f7da0;
+            font-size: 0.75rem;
+            background: #1b253f;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+        .history {
+            margin-top: 14px;
+            max-height: 110px;
+            overflow-y: auto;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .history-item {
+            background: #0d1629;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #bcc6e2;
+            border-left: 3px solid #f25f7c;
+        }
+        .history-item a {
+            color: #8db5f0;
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+        }
+        .history-item a:hover {
+            text-decoration: underline;
+        }
+        /* ===== АДМИН-ПАНЕЛЬ ===== */
+        .admin-panel {
+            background: #0c1424;
+            border-radius: 20px;
+            padding: 18px 16px;
+            margin-top: 18px;
+            border: 1.5px solid #c73b54;
+            display: none;
+        }
+        .admin-panel.active {
+            display: block;
+        }
+        .admin-title {
+            color: #f25f7c;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+        .admin-lock {
+            background: #111b30;
+            padding: 14px;
+            border-radius: 14px;
+            margin-bottom: 14px;
+        }
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 12px 0 10px;
+        }
+        .transaction-history {
+            max-height: 130px;
+            overflow-y: auto;
+            text-align: left;
+            margin-top: 8px;
+        }
+        .transaction-item {
+            background: #0f1a2d;
+            padding: 6px 12px;
+            margin: 4px 0;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #d0d9f0;
+        }
+        .deposit {
+            color: #6cf0b0;
+        }
+        .withdraw {
+            color: #f25f7c;
+        }
+        /* ===== МОДАЛКИ ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #1b2542;
+            padding: 28px 24px;
+            border-radius: 28px;
+            max-width: 360px;
+            width: 92%;
+            border: 1px solid #4b5b82;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+        }
+        .modal-content h3 {
+            color: #f7d44a;
+            margin-bottom: 18px;
+            font-size: 1.3rem;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 40px;
+            border: 1.5px solid #314268;
+            background: #0e1729;
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            outline: none;
+        }
+        .modal-content input:focus {
+            border-color: #f25f7c;
+        }
+        .modal-content button {
+            width: 100%;
+            margin-top: 6px;
+        }
+        /* ===== НОТИФИКАЦИЯ ===== */
+        .notification {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 14px 26px;
+            border-radius: 60px;
+            color: #0b0e1a;
+            font-weight: 700;
+            z-index: 9999;
+            animation: notifIn 0.35s ease, notifOut 0.35s ease 2.8s forwards;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+            background: #6cf0b0;
+            border: 1px solid #aaffd0;
+        }
+        .notification.error {
+            background: #f25f7c;
+            color: #1f0c12;
+            border-color: #ff9aaf;
+        }
+        @keyframes notifIn {
+            0% {
+                transform: translateX(120px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes notifOut {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(120px);
+                opacity: 0;
+            }
+        }
+        /* ===== АДАПТИВ ===== */
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+            .balance-amount {
+                font-size: 2.2rem;
+            }
+            .input-group {
+                flex-direction: column;
+            }
+            .input-group input {
+                width: 100%;
+            }
+            .admin-actions button {
+                flex: 1;
+                min-width: 80px;
+            }
+        }
+        /* ===== СКРОЛЛ ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0e1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3a4a70;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- ЗАГОЛОВОК -->
+        <h1>🐔 Курица через дорогу</h1>
+        <p class="subtitle">👆 Кликни по курице — получи +10 монет</p>
+
+        <!-- БАЛАНС -->
+        <div class="balance-card">
+            <div class="balance-label">💰 Баланс</div>
+            <div class="balance-amount" id="balanceDisplay">0</div>
+            <div class="balance-currency">монет</div>
+            <div class="balance-buttons">
+                <button class="btn-green" onclick="openDeposit()">📥 Пополнить</button>
+                <button class="btn-yellow" onclick="openWithdraw()">📤 Вывести</button>
+                <button class="btn-small" onclick="toggleAdmin()" id="adminBtn">🔒 Админ</button>
+            </div>
+        </div>
+
+        <!-- ИГРОВАЯ ЗОНА -->
+        <div class="game-area">
+            <div class="road" id="road">
+                <div class="road-line"></div>
+                <div class="car">🚗</div>
+                <div class="car">🚙</div>
+                <div class="car">🚕</div>
+            </div>
+            <div class="chicken" id="chicken" title="Кликни!">🐔</div>
+            <div class="finish-flag">🏁 +10</div>
+            <div class="score" id="scoreDisplay">Переходов: 0 · Крушений: 0</div>
+        </div>
+
+        <button onclick="resetChicken()" style="background:#2d3b5a; margin-bottom:4px;">🔄 Сбросить курицу</button>
+
+        <!-- РАНДОМАЙЗЕР ССЫЛОК -->
+        <div class="randomizer-section">
+            <div class="randomizer-title">🎲 Рандомайзер ссылок</div>
+            <p style="color:#8d99b5; font-size:0.85rem; margin-bottom:12px;">Пример: https://t.me/nft/ViceCream-</p>
+            <div class="input-group">
+                <input type="text" id="baseUrl" placeholder="Базовая ссылка..." value="https://t.me/nft/ViceCream-" />
+                <button onclick="generateLink()">🎰 Сгенерировать</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="minNum" placeholder="Мин" value="1" />
+                <input type="number" id="maxNum" placeholder="Макс" value="99999" />
+            </div>
+            <div class="result" id="resultBox" onclick="copyResult()">
+                <span id="resultText">Ссылка появится здесь...</span>
+                <span class="copy-hint">📋</span>
+            </div>
+            <div class="history" id="linkHistory"></div>
+        </div>
+
+        <!-- АДМИН-ПАНЕЛЬ -->
+        <div class="admin-panel" id="adminPanel">
+            <div class="admin-title">🔐 Админ-панель</div>
+            <div class="admin-lock">
+                <p style="color:#8d99b5; margin-bottom:10px;">Пароль: <b style="color:#f7d44a;">admin123</b></p>
+                <div class="input-group">
+                    <input type="password" id="adminPass" placeholder="Введите пароль..." onkeypress="if(event.key==='Enter') adminLogin()" />
+                    <button onclick="adminLogin()">Войти</button>
+                </div>
+            </div>
+            <div id="adminContent" style="display:none;">
+                <p style="color:#6cf0b0; margin-bottom:12px;">✅ Доступ разрешён</p>
+                <div class="admin-actions">
+                    <button class="btn-green" onclick="adminAdd()">➕ Добавить</button>
+                    <button class="btn-red" onclick="adminRemove()">➖ Снять</button>
+                    <button class="btn-yellow" onclick="adminSet()">⚙️ Установить</button>
+                    <button class="btn-outline" onclick="adminLogout()">🚪 Выйти</button>
+                </div>
+                <div class="transaction-history" id="adminHistory">
+                    <p style="color:#5d6f94; text-align:center; font-size:0.9rem;">История операций</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКИ -->
+    <div class="modal" id="depositModal">
+        <div class="modal-content">
+            <h3>📥 Пополнение</h3>
+            <input type="number" id="depositInput" placeholder="Сумма..." min="1" />
+            <button class="btn-green" onclick="deposit()">Пополнить</button>
+            <button class="btn-outline" onclick="closeModal('depositModal')" style="margin-top:8px;">Отмена</button>
+        </div>
+    </div>
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <h3>📤 Вывод</h3>
+            <input type="number" id="withdrawInput" placeholder="Сумма..." min="1" />
+            <input type="text" id="walletInput" placeholder="Номер кошелька / карты..." />
+            <button class="btn-yellow" onclick="withdraw()">Вывести</button>
+            <button class="btn-outline" onclick="closeModal('withdrawModal')" style="margin-top:8px;">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  ДАННЫЕ (localStorage)
+        // ============================================================
+        const STORAGE_KEY = 'chickenGameData';
+
+        function getDefaultData() {
+            return {
+                balance: 0,
+                crossings: 0,
+                crashes: 0,
+                transactions: [],
+                linkHistory: []
+            };
+        }
+
+        let data = loadData();
+
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return getDefaultData();
+                const parsed = JSON.parse(raw);
+                // защита от битых данных
+                if (typeof parsed.balance !== 'number') parsed.balance = 0;
+                if (typeof parsed.crossings !== 'number') parsed.crossings = 0;
+                if (typeof parsed.crashes !== 'number') parsed.crashes = 0;
+                if (!Array.isArray(parsed.transactions)) parsed.transactions = [];
+                if (!Array.isArray(parsed.linkHistory)) parsed.linkHistory = [];
+                return parsed;
+            } catch {
+                return getDefaultData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // ============================================================
+        //  ОБНОВЛЕНИЕ UI
+        // ============================================================
+        function updateUI() {
+            document.getElementById('balanceDisplay').textContent = data.balance;
+            document.getElementById('scoreDisplay').textContent =
+                `Переходов: ${data.crossings} · Крушений: ${data.crashes}`;
+            updateLinkHistoryUI();
+            updateAdminHistoryUI();
+        }
+
+        // ============================================================
+        //  УВЕДОМЛЕНИЯ
+        // ============================================================
+        function notify(msg, isError = false) {
+            const old = document.querySelector('.notification');
+            if (old) old.remove();
+            const div = document.createElement('div');
+            div.className = `notification${isError ? ' error' : ''}`;
+            div.textContent = msg;
+            document.body.appendChild(div);
+            setTimeout(() => { if (div.parentNode) div.remove(); }, 3200);
+        }
+
+        // ============================================================
+        //  БАЛАНС
+        // ============================================================
+        function addBalance(amount, desc = 'Пополнение') {
+            if (typeof amount !== 'number' || amount <= 0) return false;
+            data.balance = Math.round((data.balance + amount) * 100) / 100;
+            data.transactions.unshift({
+                type: 'deposit',
+                amount,
+                desc,
+                date: new Date().toLocaleString(),
+                balance: data.balance
+            });
+            saveData();
+            updateUI();
+            return true;
+        }
+
+        function removeBalance(amount, desc = 'Списание') {
+            if (typeof amount !== 'number' || amount <= 0) return false;
+            if (amount > data.balance) return false;
+            data.balance = Math.round((data.balance - amount) * 100) / 100;
+            data.transactions.unshift({
+                type: 'withdraw',
+                amount,
+                desc,
+                date: new Date().toLocaleString(),
+                balance: data.balance
+            });
+            saveData();
+            updateUI();
+            return true;
+        }
+
+        function setBalance(amount) {
+            if (typeof amount !== 'number' || amount < 0) return false;
+            const diff = amount - data.balance;
+            data.balance = Math.round(amount * 100) / 100;
+            data.transactions.unshift({
+                type: diff >= 0 ? 'deposit' : 'withdraw',
+                amount: Math.abs(Math.round(diff * 100) / 100),
+                desc: 'Установка админом',
+                date: new Date().toLocaleString(),
+                balance: data.balance
+            });
+            saveData();
+            updateUI();
+            return true;
+        }
+
+        // ============================================================
+        //  МОДАЛКИ
+        // ============================================================
+        function openDeposit() {
+            document.getElementById('depositModal').classList.add('active');
+            document.getElementById('depositInput').value = '';
+            document.getElementById('depositInput').focus();
+        }
+
+        function openWithdraw() {
+            document.getElementById('withdrawModal').classList.add('active');
+            document.getElementById('withdrawInput').value = '';
+            document.getElementById('walletInput').value = '';
+            document.getElementById('withdrawInput').focus();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        // клик по фону — закрыть
+        document.querySelectorAll('.modal').forEach(m => {
+            m.addEventListener('click', e => {
+                if (e.target === m) m.classList.remove('active');
+            });
+        });
+
+        function deposit() {
+            const inp = document.getElementById('depositInput');
+            const val = parseFloat(inp.value);
+            if (!val || val <= 0) { notify('Введите корректную сумму!', true); return; }
+            if (addBalance(val, 'Пополнение пользователем')) {
+                notify(`✅ Пополнено на ${val} монет`);
+                closeModal('depositModal');
+            }
+        }
+
+        function withdraw() {
+            const amt = parseFloat(document.getElementById('withdrawInput').value);
+            const wallet = document.getElementById('walletInput').value.trim();
+            if (!amt || amt <= 0) { notify('Введите сумму!', true); return; }
+            if (!wallet) { notify('Введите номер кошелька!', true); return; }
+            if (amt > data.balance) { notify('❌ Недостаточно средств!', true); return; }
+            if (removeBalance(amt, `Вывод на ${wallet}`)) {
+                notify(`📤 Выведено ${amt} монет на ${wallet}`);
+                closeModal('withdrawModal');
+            }
+        }
+
+        // ============================================================
+        //  ИГРА
+        // ============================================================
+        const chicken = document.getElementById('chicken');
+        let chickenTop = -28;
+        let isMoving = false;
+        let isCrashed = false;
+        let animId = null;
+
+        function resetChicken() {
+            if (isCrashed) return;
+            chickenTop = -28;
+            chicken.style.top = chickenTop + 'px';
+            chicken.textContent = '🐔';
+            chicken.classList.remove('disabled', 'crash-effect');
+            isMoving = false;
+            if (animId) { cancelAnimationFrame(animId);
+                animId = null; }
+        }
+
+        function checkCollision(chickenRect, carRect) {
+            const pad = 8;
+            return !(chickenRect.right - pad < carRect.left + pad ||
+                chickenRect.left + pad > carRect.right - pad ||
+                chickenRect.bottom - pad < carRect.top + pad ||
+                chickenRect.top + pad > carRect.bottom - pad);
+        }
+
+        function moveChicken() {
+            if (!isMoving || isCrashed) return;
+            chickenTop += 4.5;
+            chicken.style.top = chickenTop + 'px';
+
+            const cRect = chicken.getBoundingClientRect();
+            const cars = document.querySelectorAll('.car');
+            for (const car of cars) {
+                if (checkCollision(cRect, car.getBoundingClientRect())) {
+                    // КРУШЕНИЕ
+                    isMoving = false;
+                    isCrashed = true;
+                    data.crashes++;
+                    saveData();
+                    updateUI();
+                    chicken.classList.add('crash-effect');
+                    chicken.textContent = '💥';
+                    chicken.classList.add('disabled');
+                    notify('💥 Крушение! -5 монет', true);
+                    if (data.balance >= 5) {
+                        removeBalance(5, 'Штраф за крушение');
+                    } else {
+                        data.balance = 0;
+                        saveData();
+                        updateUI();
+                    }
+                    setTimeout(() => {
+                        isCrashed = false;
+                        resetChicken();
+                    }, 600);
+                    return;
+                }
+            }
+
+            if (chickenTop >= 150) {
+                // УСПЕШНЫЙ ПЕРЕХОД
+                isMoving = false;
+                data.crossings++;
+                addBalance(10, 'Награда за переход');
+                chicken.textContent = '🐔🎉';
+                chicken.classList.add('disabled');
+                notify('🐔 Успешный переход! +10 монет');
+                setTimeout(() => resetChicken(), 500);
+                return;
+            }
+
+            animId = requestAnimationFrame(moveChicken);
+        }
+
+        chicken.addEventListener('click', () => {
+            if (isMoving || isCrashed || chicken.classList.contains('disabled')) return;
+            isMoving = true;
+            if (animId) cancelAnimationFrame(animId);
+            animId = requestAnimationFrame(moveChicken);
+        });
+
+        // ============================================================
+        //  РАНДОМАЙЗЕР ССЫЛОК
+        // ============================================================
+        function generateLink() {
+            const base = document.getElementById('baseUrl').value.trim();
+            const min = parseInt(document.getElementById('minNum').value) || 1;
+            const max = parseInt(document.getElementById('maxNum').value) || 99999;
+            if (!base) { notify('Введите базовую ссылку!', true); return; }
+            if (min >= max) { notify('Мин < Макс!', true); return; }
+            const num = Math.floor(Math.random() * (max - min + 1)) + min;
+            const link = base + num;
+            document.getElementById('resultText').textContent = link;
+            const box = document.getElementById('resultBox');
+            box.style.transform = 'scale(1.02)';
+            setTimeout(() => box.style.transform = 'scale(1)', 150);
+            data.linkHistory.unshift(link);
+            if (data.linkHistory.length > 12) data.linkHistory.pop();
+            saveData();
+            updateLinkHistoryUI();
+        }
+
+        function updateLinkHistoryUI() {
+            const container = document.getElementById('linkHistory');
+            if (!data.linkHistory.length) { container.innerHTML = ''; return; }
+            container.innerHTML = data.linkHistory.map(item => `
+                    <div class="history-item">
+                        <a href="${item}" target="_blank" rel="noopener">🔗 ${item.slice(0, 38)}${item.length > 38 ? '…' : ''}</a>
+                        <button class="btn-small" onclick="copyText('${item.replace(/'/g, "\\'")}')">📋</button>
+                    </div>
+                `).join('');
+        }
+
+        function copyResult() {
+            const text = document.getElementById('resultText').textContent;
+            if (text === 'Ссылка появится здесь...') return;
+            copyText(text);
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(text).then(() => notify('📋 Скопировано!'));
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy');
+                    notify('📋 Скопировано!'); } catch { notify('Ошибка копирования', true); }
+                document.body.removeChild(ta);
+            }
+        }
+
+        // ============================================================
+        //  АДМИН-ПАНЕЛЬ
+        // ============================================================
+        const ADMIN_HASH = btoa('admin123');
+        let adminLogged = sessionStorage.getItem('adminLogged') === 'true';
+
+        function toggleAdmin() {
+            const panel = document.getElementById('adminPanel');
+            panel.classList.toggle('active');
+            if (panel.classList.contains('active') && adminLogged) {
+                document.getElementById('adminContent').style.display = 'block';
+                updateAdminHistoryUI();
+            }
+        }
+
+        function adminLogin() {
+            const pass = document.getElementById('adminPass').value;
+            if (btoa(pass) === ADMIN_HASH) {
+                adminLogged = true;
+                sessionStorage.setItem('adminLogged', 'true');
+                document.getElementById('adminContent').style.display = 'block';
+                updateAdminHistoryUI();
+                notify('🔓 Админ-доступ разрешён');
+            } else {
+                notify('❌ Неверный пароль!', true);
+            }
+        }
+
+        function adminLogout() {
+            adminLogged = false;
+            sessionStorage.removeItem('adminLogged');
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('adminPass').value = '';
+            notify('🔒 Выход из админки');
+        }
+
+        function adminAdd() {
+            if (!adminLogged) return;
+            const input = prompt('Сумма для добавления:', '100');
+            if (input === null) return;
+            const val = parseFloat(input);
+            if (!val || val <= 0) { notify('Некорректная сумма', true); return; }
+            if (addBalance(val, 'Добавлено админом')) notify(`✅ +${val} монет`);
+        }
+
+        function adminRemove() {
+            if (!adminLogged) return;
+            const input = prompt('Сумма для снятия:', '50');
+            if (input === null) return;
+            const val = parseFloat(input);
+            if (!val || val <= 0) { notify('Некорректная сумма', true); return; }
+            if (removeBalance(val, 'Снято админом')) notify(`➖ -${val} монет`);
+            else notify('❌ Недостаточно средств!', true);
+        }
+
+        function adminSet() {
+            if (!adminLogged) return;
+            const input = prompt('Новое значение баланса:', data.balance);
+            if (input === null) return;
+            const val = parseFloat(input);
+            if (isNaN(val) || val < 0) { notify('Некорректное значение', true); return; }
+            if (setBalance(val)) notify(`⚙️ Баланс = ${val} монет`);
+        }
+
+        function updateAdminHistoryUI() {
+            const div = document.getElementById('adminHistory');
+            const items = data.transactions.slice(0, 15);
+            if (!items.length) {
+                div.innerHTML = '<p style="color:#5d6f94; text-align:center;">Нет операций</p>';
+                return;
+            }
+            div.innerHTML = items.map(t => `
+                    <div class="transaction-item">
+                        <span>
+                            <span class="${t.type === 'deposit' ? 'deposit' : 'withdraw'}">
+                                ${t.type === 'deposit' ? '📥 +' : '📤 -'}${t.amount}
+                            </span>
+                            <span style="color:#8d99b5; font-size:0.7rem; margin-left:6px;">${t.desc}</span>
+                        </span>
+                        <span style="color:#6f7da0; font-size:0.65rem;">${t.date}</span>
+                    </div>
+                `).join('');
+        }
+
+        // ============================================================
+        //  ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
+        updateUI();
+        if (adminLogged) {
+            document.getElementById('adminContent').style.display = 'block';
+            updateAdminHistoryUI();
+        }
+        // генерируем первую ссылку
+        setTimeout(generateLink, 300);
+
+        // обработка Enter на полях
+        document.getElementById('baseUrl').addEventListener('keypress', e => { if (e.key === 'Enter') generateLink(); });
+        document.getElementById('minNum').addEventListener('keypress', e => { if (e.key === 'Enter') generateLink(); });
+        document.getElementById('maxNum').addEventListener('keypress', e => { if (e.key === 'Enter') generateLink(); });
+
+        console.log('🐔 Игра загружена! Баланс сохраняется в localStorage.');
+        console.log('🔐 Пароль админа: admin123 (хеширован)');
+        console.log('📤 Вывод средств работает через модалку.');
+    </script>
+</body>
+</html>
