@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>HazeD TON - Симулятор трейдера</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="header">
+        <div class="header-top">
+            <span class="time">13:22</span>
+            <span class="title">МелСтрел<br><small>мини-приложение</small></span>
+            <button class="close-btn">✕</button>
+        </div>
+        <div class="header-balance">
+            <span class="coin">MELCOIN</span>
+            <span class="balance" id="mainBalance">104.62</span>
+            <span class="luck-badge">x2 удача</span>
+        </div>
+    </header>
+
+    <!-- Основное меню -->
+    <nav class="main-nav">
+        <button class="nav-btn active" data-tab="trade">Трейдинг</button>
+        <button class="nav-btn" data-tab="slots">Слоты</button>
+        <button class="nav-btn" data-tab="mines">Мины</button>
+        <button class="nav-btn" data-tab="market">Маркет</button>
+        <button class="nav-btn" data-tab="inventory">Инвентарь</button>
+    </nav>
+
+    <!-- Вкладка Трейдинг -->
+    <section id="tab-trade" class="tab active">
+        <div class="trade-container">
+            <div class="trade-header">
+                <h2>Симулятор трейдера ТОН</h2>
+                <div class="ton-price">
+                    TON / USD <span class="price">$2.4258</span>
+                    <span class="change negative">-5.84%</span>
+                </div>
+            </div>
+
+            <div class="trade-balance">
+                <div class="balance-item">
+                    <span>Баланс TON</span>
+                    <span class="value" id="tradeBalance">99.50</span>
+                </div>
+                <div class="balance-item">
+                    <span>TON в портфеле</span>
+                    <span class="value">0.0000</span>
+                </div>
+            </div>
+
+            <div class="trade-actions">
+                <button class="trade-btn buy" id="buyTon">Купить TON</button>
+                <button class="trade-btn sell" id="sellTon">Продать TON</button>
+                <button class="trade-btn allin" id="allIn">ALL IN (x2.5)</button>
+            </div>
+
+            <div class="trade-warning">
+                ⚠ Ваши сделки влияют на курс. ALL IN: ставишь весь баланс,
+                угадал направление → x2.5, проиграл → 0. Комиссия 10% при выводе.
+            </div>
+
+            <div class="market-indicator">
+                Рынок: <span class="negative">▼ 5.8%</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Вкладка Слоты -->
+    <section id="tab-slots" class="tab">
+        <div class="slots-container">
+            <div class="slots-header">
+                <span>🎰 Слоты</span>
+                <span class="luck-badge">x2 удача</span>
+            </div>
+
+            <div class="slots-grid" id="slotsGrid">
+                <!-- Генерируется через JS -->
+            </div>
+
+            <div class="slot-controls">
+                <input type="number" id="slotBet" value="0.10" step="0.01" min="0.01" />
+                <button class="spin-btn" id="spinSlots">КРУТИТЬ ЗА 3 МС</button>
+            </div>
+
+            <div class="slot-result" id="slotResult">
+                ВЫИГРЫШ <span id="slotWinAmount">17.72</span> МС
+            </div>
+        </div>
+    </section>
+
+    <!-- Вкладка Мины -->
+    <section id="tab-mines" class="tab">
+        <div class="mines-container">
+            <div class="mines-header">
+                <span>💣 Мины</span>
+                <span class="luck-badge">x2 удача</span>
+            </div>
+
+            <div class="mines-mode">
+                <button class="mode-btn active" data-mines="2">2</button>
+                <button class="mode-btn" data-mines="4">4</button>
+                <button class="mode-btn" data-mines="10">10</button>
+                <button class="mode-btn" data-mines="24">24</button>
+            </div>
+
+            <div class="mines-grid" id="minesGrid">
+                <!-- Генерируется через JS -->
+            </div>
+
+            <div class="mines-multipliers">
+                <span>★1 x1.05</span>
+                <span>★2 x1.15</span>
+                <span>★3 x1.26</span>
+                <span>★4 x1.39</span>
+                <span>★5 x1.5</span>
+            </div>
+
+            <div class="mines-controls">
+                <input type="number" id="minesBet" value="0.10" step="0.01" min="0.01" />
+                <button class="mines-action" id="minesAction">Сделать ставку</button>
+            </div>
+
+            <div class="mines-result" id="minesResult">
+                <span id="minesStatus">Открывайте клетки</span>
+                <span id="minesAmount"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Вкладка Маркет -->
+    <section id="tab-market" class="tab">
+        <div class="market-container">
+            <div class="market-header">
+                <h3>NFT Подарки</h3>
+                <span class="market-change negative">Рынок: ▼ 8.7%</span>
+            </div>
+
+            <div class="market-filters">
+                <button class="filter-btn active">Все</button>
+                <button class="filter-btn">common</button>
+                <button class="filter-btn">rare</button>
+                <button class="filter-btn">epic</button>
+                <button class="filter-btn">legendary</button>
+                <button class="filter-btn">mythic</button>
+                <button class="filter-btn">halloween</button>
+            </div>
+
+            <div class="market-items" id="marketItems">
+                <!-- Генерируется через JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Вкладка Инвентарь -->
+    <section id="tab-inventory" class="tab">
+        <div class="inventory-container">
+            <h3>Мои подарки</h3>
+            <div class="inventory-balance">
+                <span>99.50 TON</span>
+            </div>
+            <div class="inventory-items" id="inventoryItems">
+                <p class="empty">У вас пока нет предметов</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <span>85% WIN • x2 LUCK • x5 EVENT • +5 TON каждые 4ч</span>
+    </footer>
+
+    <!-- Модальное окно для предметов -->
+    <div class="modal" id="itemModal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h3 id="modalTitle">Предмет</h3>
+            <p id="modalPrice">Цена: 0 TON</p>
+            <p id="modalRarity">Редкость: common</p>
+            <button id="modalBuy">Купить</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
