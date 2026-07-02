@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vetrix – Казино</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body { background: #0d1117; color: #e6edf3; font-family: 'Segoe UI', sans-serif; }
+        .navbar { background: #161b22 !important; border-bottom: 1px solid #30363d; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; }
+        .btn-primary { background: #238636; border-color: #238636; }
+        .btn-primary:hover { background: #2ea043; border-color: #2ea043; }
+        .btn-danger { background: #da3633; border-color: #da3633; }
+        .btn-danger:hover { background: #f85149; border-color: #f85149; }
+        .btn-warning { background: #d29922; border-color: #d29922; color: #000; }
+        .btn-warning:hover { background: #e3b341; border-color: #e3b341; }
+        .btn-outline-secondary { color: #8b949e; border-color: #30363d; }
+        .btn-outline-secondary:hover { background: #30363d; color: #fff; }
+        .btn-success { background: #238636; border-color: #238636; }
+        .cell { width: 70px; height: 70px; font-size: 24px; display: flex; align-items: center; justify-content: center; background: #21262d; border: 1px solid #30363d; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .cell:hover { background: #30363d; }
+        .cell.mine { background: #da3633; color: #fff; }
+        .cell.safe { background: #238636; color: #fff; }
+        .cell.revealed { cursor: default; }
+        .balance-badge { background: #1f6feb; padding: 6px 16px; border-radius: 20px; font-weight: 600; margin: 0 4px; }
+        .rub-badge { background: #2d3748; padding: 6px 16px; border-radius: 20px; font-weight: 600; color: #e6edf3; }
+        .history-item { border-left: 3px solid #30363d; padding-left: 12px; margin-bottom: 8px; }
+        .history-item.income { border-left-color: #238636; }
+        .history-item.outcome { border-left-color: #da3633; }
+        .nav-tabs .nav-link { color: #8b949e; }
+        .nav-tabs .nav-link.active { color: #e6edf3; background: transparent; border-bottom: 2px solid #1f6feb; }
+        .form-control, .form-select { background: #0d1117; color: #e6edf3; border: 1px solid #30363d; }
+        .form-control:focus, .form-select:focus { background: #0d1117; color: #e6edf3; border-color: #1f6feb; box-shadow: 0 0 0 0.25rem rgba(31, 111, 235, 0.25); }
+        .modal-content { background: #161b22; color: #e6edf3; border: 1px solid #30363d; }
+        .modal-header { border-bottom: 1px solid #30363d; }
+        .modal-footer { border-top: 1px solid #30363d; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: #161b22; border: 1px solid #30363d; color: #e6edf3; }
+        .nft-card img { max-height: 120px; object-fit: cover; border-radius: 8px; }
+        .nft-card { transition: 0.2s; }
+        .nft-card:hover { transform: scale(1.02); }
+        .virtual-card { background: linear-gradient(135deg, #1f6feb, #0d47a1); border-radius: 16px; padding: 20px; color: white; max-width: 350px; margin: 0 auto; }
+        .virtual-card .card-number { font-size: 20px; letter-spacing: 2px; font-family: monospace; }
+        .virtual-card .card-label { font-size: 12px; opacity: 0.8; }
+        .pvp-player { padding: 8px 12px; border-radius: 8px; background: #21262d; margin-bottom: 6px; }
+        .pvp-player.me { background: #1f6feb; }
+        .pvp-player.bot { background: #2d3748; }
+        .pvp-player .badge { font-size: 14px; }
+        .channel-post { border-left: 3px solid #1f6feb; padding-left: 12px; margin-bottom: 12px; }
+        .channel-post .author { font-weight: 600; color: #58a6ff; }
+        .channel-post .time { color: #8b949e; font-size: 12px; }
+        .subscriber-entry { display: inline-block; background: #21262d; padding: 4px 12px; border-radius: 16px; margin: 4px; }
+        .subscriber-entry.joined { background: #238636; }
+        .winner-badge { background: #d29922; color: #000; padding: 2px 10px; border-radius: 12px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <!-- Шапка -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-light" href="#"><i class="fas fa-dice-d6 me-2"></i>Vetrix</a>
+            <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+                <span class="rub-badge"><i class="fas fa-credit-card me-1"></i> 💳 <span id="rubBalanceDisplay">0</span> ₽</span>
+                <span class="balance-badge" id="balanceDisplay">⭐ 0</span>
+                <span id="userDisplay" class="text-light">Гость</span>
+                <button class="btn btn-outline-secondary btn-sm" id="loginBtn"><i class="fas fa-sign-in-alt"></i></button>
+                <button class="btn btn-outline-secondary btn-sm d-none" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основное содержание -->
+    <div class="container mt-4">
+        <!-- Вкладки -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" id="shop-tab" data-bs-toggle="tab" data-bs-target="#shop" type="button" role="tab">Магазин звёзд</button></li>
+            <li class="nav-item"><button class="nav-link" id="game-tab" data-bs-toggle="tab" data-bs-target="#game" type="button" role="tab">Игра «Мина»</button></li>
+            <li class="nav-item"><button class="nav-link" id="nft-tab" data-bs-toggle="tab" data-bs-target="#nft" type="button" role="tab">NFT-маркет</button></li>
+            <li class="nav-item"><button class="nav-link" id="pvp-tab" data-bs-toggle="tab" data-bs-target="#pvp" type="button" role="tab"><i class="fas fa-gamepad"></i> PvP Рулетка</button></li>
+            <li class="nav-item"><button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab"><i class="fas fa-box"></i> Инвентарь</button></li>
+            <li class="nav-item"><button class="nav-link" id="channel-tab" data-bs-toggle="tab" data-bs-target="#channel" type="button" role="tab"><i class="fas fa-broadcast-tower"></i> Канал</button></li>
+            <li class="nav-item"><button class="nav-link" id="card-tab" data-bs-toggle="tab" data-bs-target="#card" type="button" role="tab"><i class="fas fa-credit-card"></i> Моя карта</button></li>
+            <li class="nav-item"><button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">История</button></li>
+            <li class="nav-item"><button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab"><i class="fas fa-user-cog"></i> Админ</button></li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Магазин звёзд -->
+            <div class="tab-pane fade show active" id="shop" role="tabpanel">
+                <div class="row" id="starPackagesContainer"></div>
+                <div class="mt-4">
+                    <h5>Заявки на пополнение (ручной перевод)</h5>
+                    <div id="depositRequestsList" class="list-group"></div>
+                </div>
+            </div>
+
+            <!-- Игра Мина -->
+            <div class="tab-pane fade" id="game" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <h5>Ставка (звёзды)</h5>
+                            <div class="input-group mb-3">
+                                <input type="number" class="form-control" id="betAmount" value="10" min="1" />
+                                <button class="btn btn-primary" id="startGameBtn">Начать игру</button>
+                            </div>
+                            <div id="gameStatus" class="alert alert-secondary">Нажмите «Начать игру»</div>
+                            <div id="gameField" class="d-grid" style="grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 320px;"></div>
+                            <div class="mt-3">
+                                <button class="btn btn-warning" id="cashoutBtn" disabled>Забрать выигрыш</button>
+                                <span class="ms-3" id="currentMultiplier">Множитель: 1.0x</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <h5>Правила</h5>
+                            <p>Поле 4×4, спрятано <strong>3 мины</strong>. Открывайте клетки по одной. Каждая безопасная клетка увеличивает множитель на <strong>+0.2</strong>. Если попадёте в мину – проигрыш. Вы можете забрать выигрыш в любой момент.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NFT-маркет -->
+            <div class="tab-pane fade" id="nft" role="tabpanel">
+                <div class="row" id="nftItemsContainer"></div>
+            </div>
+
+            <!-- PvP Рулетка -->
+            <div class="tab-pane fade" id="pvp" role="tabpanel">
+                <div class="card p-3">
+                    <h5>🎲 PvP Рулетка с ботами</h5>
+                    <p>Вы ставите звёзды, 3 бота ставят случайные суммы. Победитель определяется случайно с вероятностью, равной вашей доле в банке.</p>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Ваша ставка (звёзды)</label>
+                            <input type="number" class="form-control" id="pvpBet" value="100" min="10" />
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" id="pvpStartBtn">Создать игру</button>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button class="btn btn-warning w-100" id="pvpAutoBtn" disabled>Авто-игра (5 сек)</button>
+                        </div>
+                    </div>
+                    <hr />
+                    <div id="pvpGameArea">
+                        <p class="text-muted">Нажмите «Создать игру» для начала.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Инвентарь NFT -->
+            <div class="tab-pane fade" id="inventory" role="tabpanel">
+                <div class="card p-3">
+                    <h5><i class="fas fa-box"></i> Мои NFT</h5>
+                    <div id="inventoryList" class="row"></div>
+                </div>
+            </div>
+
+            <!-- Канал -->
+            <div class="tab-pane fade" id="channel" role="tabpanel">
+                <div class="card p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-broadcast-tower"></i> Канал</h5>
+                        <span class="badge bg-primary" id="subscriberCount">Подписчиков: 0</span>
+                    </div>
+                    <hr />
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="channelMessage" placeholder="Напишите сообщение..." />
+                            <button class="btn btn-primary" id="channelSendBtn">Отправить</button>
+                            <button class="btn btn-success" id="channelStartBtn"><i class="fas fa-play"></i> /start (розыгрыш)</button>
+                        </div>
+                    </div>
+                    <div id="channelFeed" style="max-height: 400px; overflow-y: auto;">
+                        <p class="text-muted">Сообщений пока нет.</p>
+                    </div>
+                    <div id="channelSubscribersContainer" class="mt-3">
+                        <h6>Подписчики онлайн:</h6>
+                        <div id="channelSubscribersList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Моя карта -->
+            <div class="tab-pane fade" id="card" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card p-4">
+                            <h5>💳 Моя виртуальная карта</h5>
+                            <div class="virtual-card my-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="card-label">Vetrix</span>
+                                    <span class="card-label">PIN: 8888</span>
+                                </div>
+                                <div class="card-number text-center my-3">777 888 666</div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="card-label">Баланс: <strong id="cardBalanceRub">0</strong> ₽</span>
+                                    <span class="card-label">CVV: ***</span>
+                                </div>
+                            </div>
+                            <p><strong>Реквизиты для пополнения:</strong></p>
+                            <div class="alert alert-info">
+                                Номер карты: <strong>777 888 666</strong><br>
+                                Получатель: Vetrix User<br>
+                                Банк: Demo Bank
+                            </div>
+                            <p class="text-muted small">Управление балансом через админ-панель.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <h5>Операции с картой</h5>
+                            <div id="cardHistoryList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- История -->
+            <div class="tab-pane fade" id="history" role="tabpanel">
+                <div class="card p-3">
+                    <h5>Все операции</h5>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+
+            <!-- Админ-панель -->
+            <div class="tab-pane fade" id="admin" role="tabpanel">
+                <div class="card p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5><i class="fas fa-user-shield me-2"></i>Админ-панель</h5>
+                        <button class="btn btn-outline-secondary btn-sm" id="adminLoginBtn">Вход</button>
+                        <button class="btn btn-outline-secondary btn-sm d-none" id="adminLogoutBtn">Выйти</button>
+                    </div>
+                    <div id="adminContent">
+                        <p class="text-muted">Введите пароль для доступа.</p>
+                        <div class="input-group w-50">
+                            <input type="password" class="form-control" id="adminPassword" placeholder="Пароль" value="admin123" />
+                            <button class="btn btn-primary" id="adminAuthBtn">Войти</button>
+                        </div>
+                    </div>
+                    <div id="adminDashboard" style="display:none;">
+                        <ul class="nav nav-pills mb-3" id="adminTabs" role="tablist">
+                            <li class="nav-item"><button class="nav-link active" data-bs-target="#adminPackages" data-bs-toggle="tab">Пакеты звёзд</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-target="#adminNFT" data-bs-toggle="tab">NFT товары</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-target="#adminRequests" data-bs-toggle="tab">Заявки</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-target="#adminUsers" data-bs-toggle="tab">Пользователи</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-target="#adminSubscribers" data-bs-toggle="tab">Подписчики</button></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="adminPackages">
+                                <button class="btn btn-success btn-sm mb-2" id="addPackageBtn"><i class="fas fa-plus"></i> Добавить пакет</button>
+                                <div id="adminPackagesList"></div>
+                            </div>
+                            <div class="tab-pane" id="adminNFT">
+                                <button class="btn btn-success btn-sm mb-2" id="addNFTBtn"><i class="fas fa-plus"></i> Добавить NFT</button>
+                                <div id="adminNFTList"></div>
+                            </div>
+                            <div class="tab-pane" id="adminRequests">
+                                <h6>Заявки на пополнение звёзд</h6>
+                                <div id="adminDepositRequests"></div>
+                                <h6 class="mt-4">Заявки на покупку NFT за рубли</h6>
+                                <div id="adminNFTPurchaseRequests"></div>
+                            </div>
+                            <div class="tab-pane" id="adminUsers">
+                                <div id="adminUsersList"></div>
+                            </div>
+                            <div class="tab-pane" id="adminSubscribers">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-auto">
+                                        <label class="form-label">Количество:</label>
+                                    </div>
+                                    <div class="col-3">
+                                        <input type="number" class="form-control" id="subscriberCountInput" value="5" min="1" />
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-success" id="addSubscribersBtn"><i class="fas fa-plus"></i> Создать подписчиков</button>
+                                    </div>
+                                </div>
+                                <div id="adminSubscribersList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалки -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Вход / Регистрация</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control" id="loginUsername" placeholder="Введите имя" />
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="loginConfirmBtn">Войти</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Оплата</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="paymentModalBody"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" id="paymentConfirmBtn">Я оплатил, проверить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ====================== ХРАНИЛИЩЕ ======================
+        const Storage = {
+            get(key, def) { try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch { return def; } },
+            set(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+        };
+
+        // ====================== ДАННЫЕ ======================
+        const DEFAULT_DATA = {
+            users: [],
+            packages: [
+                { id: 1, stars: 100, price: 110, details: 'Карта 1234 5678 9012 3456, получатель: Ivanov' },
+                { id: 2, stars: 500, price: 500, details: 'Карта 1234 5678 9012 3456, получатель: Ivanov' },
+                { id: 3, stars: 1000, price: 950, details: 'Карта 1234 5678 9012 3456, получатель: Ivanov' },
+            ],
+            nftItems: [
+                { id: 1, name: 'SnoopCigar #111210', link: 'https://t.me/nft/SnoopCigar-111210', priceStars: 100, priceRub: 10000, image: '' },
+                { id: 2, name: 'CryptoPunk #1234', link: 'https://t.me/nft/CryptoPunk-1234', priceStars: 250, priceRub: 25000, image: '' },
+            ],
+            depositRequests: [],
+            nftPurchaseRequests: [],
+            history: [],
+            currentUserId: null,
+            subscribers: [],
+            channelMessages: [],
+        };
+
+        let data = initData();
+        function initData() {
+            let d = Storage.get('vetrixData', null);
+            if (!d) {
+                const admin = { id: 1, name: 'admin', balance: 9999, cardBalance: 99999, isAdmin: true, ownedNFTs: [] };
+                const user = { id: 2, name: 'user', balance: 100, cardBalance: 5000, isAdmin: false, ownedNFTs: [] };
+                d = { ...DEFAULT_DATA, users: [admin, user] };
+                for (let i = 1; i <= 10; i++) d.subscribers.push('User' + i);
+                Storage.set('vetrixData', d);
+            }
+            return d;
+        }
+
+        function saveData() { Storage.set('vetrixData', data); }
+        function getNextId(arr) { return arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1; }
+        function getUser(id) { return data.users.find(u => u.id === id); }
+        function getCurrentUser() { return data.currentUserId ? getUser(data.currentUserId) : null; }
+
+        function addHistory(userId, type, amount, currency, description) {
+            data.history.push({ userId, type, amount, currency, description, timestamp: Date.now() });
+            saveData();
+        }
+
+        function showToast(msg, type = 'info') {
+            const container = document.querySelector('.toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0 show`;
+            toast.role = 'alert';
+            toast.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // ====================== ОСНОВНЫЕ ФУНКЦИИ ======================
+        function renderAll() {
+            const user = getCurrentUser();
+            document.getElementById('balanceDisplay').innerHTML = `⭐ ${user ? user.balance : 0}`;
+            document.getElementById('rubBalanceDisplay').textContent = user ? user.cardBalance : 0;
+            document.getElementById('cardBalanceRub').textContent = user ? user.cardBalance : 0;
+            document.getElementById('userDisplay').textContent = user ? user.name : 'Гость';
+            document.getElementById('loginBtn').classList.toggle('d-none', !!user);
+            document.getElementById('logoutBtn').classList.toggle('d-none', !user);
+            renderPackages();
+            renderDepositRequests();
+            renderNFT();
+            renderCardHistory();
+            renderHistory();
+            renderInventory();
+            renderChannelFeed();
+            renderChannelSubscribers();
+            document.getElementById('subscriberCount').textContent = `Подписчиков: ${data.subscribers.length}`;
+            if (adminAuthenticated) {
+                renderAdminPackages();
+                renderAdminNFT();
+                renderAdminDepositRequests();
+                renderAdminNFTPurchaseRequests();
+                renderAdminUsers();
+                renderAdminSubscribers();
+            }
+        }
+
+        // ---- Магазин звёзд ----
+        function renderPackages() {
+            const container = document.getElementById('starPackagesContainer');
+            container.innerHTML = data.packages.map(p => `
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 h-100">
+                        <h5>⭐ ${p.stars} звёзд</h5>
+                        <p>${p.price} ₽</p>
+                        <button class="btn btn-primary buy-stars" data-id="${p.id}">Купить</button>
+                    </div>
+                </div>
+            `).join('');
+            container.querySelectorAll('.buy-stars').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const pkgId = parseInt(this.dataset.id);
+                    openPaymentModal(pkgId);
+                });
+            });
+        }
+
+        function openPaymentModal(pkgId) {
+            const user = getCurrentUser();
+            if (!user) { showToast('Войдите', 'warning'); return; }
+            const pkg = data.packages.find(p => p.id === pkgId);
+            if (!pkg) return;
+            const body = document.getElementById('paymentModalBody');
+            body.innerHTML = `
+                <p>Пакет <strong>${pkg.stars} звёзд</strong> за ${pkg.price} ₽.</p>
+                <p><strong>Реквизиты:</strong></p>
+                <div class="alert alert-info">${pkg.details}</div>
+                <p>После оплаты нажмите «Проверить».</p>
+            `;
+            const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            modal.show();
+            document.getElementById('paymentConfirmBtn').dataset.pkgId = pkgId;
+        }
+
+        document.getElementById('paymentConfirmBtn').addEventListener('click', function() {
+            const pkgId = parseInt(this.dataset.pkgId);
+            const user = getCurrentUser();
+            if (!user) return;
+            const pkg = data.packages.find(p => p.id === pkgId);
+            if (!pkg) return;
+            data.depositRequests.push({
+                id: getNextId(data.depositRequests),
+                userId: user.id,
+                packageId: pkgId,
+                status: 'pending',
+                createdAt: Date.now()
+            });
+            saveData();
+            showToast('Заявка создана, ждите подтверждения админа', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            renderAll();
+        });
+
+        function renderDepositRequests() {
+            const list = document.getElementById('depositRequestsList');
+            const user = getCurrentUser();
+            if (!user) { list.innerHTML = '<p class="text-muted">Войдите</p>'; return; }
+            const reqs = data.depositRequests.filter(r => r.userId === user.id);
+            if (!reqs.length) { list.innerHTML = '<p class="text-muted">Нет заявок</p>'; return; }
+            list.innerHTML = reqs.map(r => {
+                const pkg = data.packages.find(p => p.id === r.packageId);
+                const statusMap = { pending: '⏳ Ожидает', confirmed: '✅ Подтверждён', cancelled: '❌ Отменён' };
+                return `<div class="list-group-item bg-dark text-light">Пакет ${pkg ? pkg.stars : '?'} зв. — ${statusMap[r.status]}</div>`;
+            }).join('');
+        }
+
+        // ---- NFT-маркет ----
+        function renderNFT() {
+            const container = document.getElementById('nftItemsContainer');
+            container.innerHTML = data.nftItems.map(item => `
+                <div class="col-md-4 mb-3">
+                    <div class="card nft-card p-3 h-100">
+                        ${item.image ? `<img src="${item.image}" class="mb-2" />` : ''}
+                        <h5>${item.name}</h5>
+                        <p class="text-muted small">${item.link}</p>
+                        <div>${item.priceStars ? `<span class="badge bg-primary me-2">⭐ ${item.priceStars}</span>` : ''}${item.priceRub ? `<span class="badge bg-secondary">₽ ${item.priceRub}</span>` : ''}</div>
+                        <div class="mt-2">
+                            ${item.priceStars ? `<button class="btn btn-sm btn-success buy-nft-stars" data-id="${item.id}">Купить за звёзды</button>` : ''}
+                            ${item.priceRub ? `<button class="btn btn-sm btn-warning buy-nft-rub" data-id="${item.id}">Купить за рубли</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            container.querySelectorAll('.buy-nft-stars').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const user = getCurrentUser();
+                    if (!user) { showToast('Войдите', 'warning'); return; }
+                    const item = data.nftItems.find(i => i.id === id);
+                    if (!item || !item.priceStars) return;
+                    if (user.balance < item.priceStars) { showToast('Недостаточно звёзд', 'danger'); return; }
+                    if (confirm(`Купить ${item.name} за ${item.priceStars} звёзд?`)) {
+                        user.balance -= item.priceStars;
+                        if (!user.ownedNFTs) user.ownedNFTs = [];
+                        user.ownedNFTs.push(item.id);
+                        addHistory(user.id, 'outcome', item.priceStars, 'star', `Покупка NFT: ${item.name}`);
+                        saveData();
+                        renderAll();
+                        showToast(`Вы купили ${item.name}!`, 'success');
+                    }
+                });
+            });
+            container.querySelectorAll('.buy-nft-rub').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const user = getCurrentUser();
+                    if (!user) { showToast('Войдите', 'warning'); return; }
+                    const item = data.nftItems.find(i => i.id === id);
+                    if (!item || !item.priceRub) return;
+                    if (user.cardBalance < item.priceRub) { showToast('Недостаточно рублей на карте', 'danger'); return; }
+                    if (confirm(`Купить ${item.name} за ${item.priceRub} ₽?`)) {
+                        user.cardBalance -= item.priceRub;
+                        if (!user.ownedNFTs) user.ownedNFTs = [];
+                        user.ownedNFTs.push(item.id);
+                        addHistory(user.id, 'outcome', item.priceRub, 'rub', `Покупка NFT: ${item.name}`);
+                        saveData();
+                        renderAll();
+                        showToast(`Вы купили ${item.name}!`, 'success');
+                    }
+                });
+            });
+        }
+
+        // ---- Инвентарь ----
+        function renderInventory() {
+            const container = document.getElementById('inventoryList');
+            const user = getCurrentUser();
+            if (!user) { container.innerHTML = '<p class="text-muted">Войдите, чтобы увидеть инвентарь</p>'; return; }
+            const owned = user.ownedNFTs || [];
+            if (!owned.length) { container.innerHTML = '<p class="text-muted">У вас пока нет NFT</p>'; return; }
+            const items = owned.map(id => data.nftItems.find(i => i.id === id)).filter(Boolean);
+            if (!items.length) {
+                container.innerHTML = '<p class="text-muted">Нет доступных NFT (возможно, они были удалены из магазина)</p>';
+                return;
+            }
+            container.innerHTML = items.map(item => `
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3">
+                        <h6>${item.name}</h6>
+                        <p class="text-muted small">${item.link}</p>
+                        <div class="d-flex gap-2 mt-2">
+                            ${(item.priceStars || item.priceRub) ? `<button class="btn btn-sm btn-success sell-nft" data-id="${item.id}">Продать</button>` : ''}
+                            <button class="btn btn-sm btn-danger delete-nft-inv" data-id="${item.id}">Удалить</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.sell-nft').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const user = getCurrentUser();
+                    if (!user) return;
+                    const item = data.nftItems.find(i => i.id === id);
+                    if (!item) { showToast('NFT не найден', 'danger'); return; }
+                    if (!user.ownedNFTs || !user.ownedNFTs.includes(id)) {
+                        showToast('У вас нет этого NFT', 'warning');
+                        return;
+                    }
+                    let compensation = 0;
+                    let currency = '';
+                    if (item.priceStars) {
+                        compensation = item.priceStars;
+                        currency = 'star';
+                    } else if (item.priceRub) {
+                        compensation = item.priceRub;
+                        currency = 'rub';
+                    } else {
+                        showToast('Этот NFT нельзя продать (нет цены)', 'warning');
+                        return;
+                    }
+                    if (confirm(`Продать ${item.name} за ${compensation} ${currency === 'star' ? '⭐' : '₽'}?`)) {
+                        user.ownedNFTs = user.ownedNFTs.filter(ownedId => ownedId !== id);
+                        if (currency === 'star') {
+                            user.balance += compensation;
+                        } else {
+                            user.cardBalance += compensation;
+                        }
+                        addHistory(user.id, 'income', compensation, currency, `Продажа NFT: ${item.name}`);
+                        saveData();
+                        renderAll();
+                        showToast(`Вы продали ${item.name} за ${compensation} ${currency === 'star' ? '⭐' : '₽'}`, 'success');
+                    }
+                });
+            });
+
+            container.querySelectorAll('.delete-nft-inv').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const user = getCurrentUser();
+                    if (!user) return;
+                    if (!user.ownedNFTs || !user.ownedNFTs.includes(id)) {
+                        showToast('У вас нет этого NFT', 'warning');
+                        return;
+                    }
+                    if (confirm(`Удалить ${data.nftItems.find(i => i.id === id)?.name || 'NFT'} безвозвратно?`)) {
+                        user.ownedNFTs = user.ownedNFTs.filter(ownedId => ownedId !== id);
+                        addHistory(user.id, 'outcome', 0, 'star', `Удаление NFT: ${data.nftItems.find(i => i.id === id)?.name || 'NFT'}`);
+                        saveData();
+                        renderAll();
+                        showToast('NFT удалён', 'info');
+                    }
+                });
+            });
+        }
+
+        // ---- Карта ----
+        function renderCardHistory() {
+            const container = document.getElementById('cardHistoryList');
+            const user = getCurrentUser();
+            if (!user) { container.innerHTML = '<p class="text-muted">Войдите</p>'; return; }
+            const items = data.history.filter(h => h.userId === user.id && h.currency === 'rub').slice().reverse();
+            if (!items.length) { container.innerHTML = '<p class="text-muted">Нет операций</p>'; return; }
+            container.innerHTML = items.map(h => `
+                <div class="history-item ${h.type === 'income' ? 'income' : 'outcome'}">
+                    <div class="d-flex justify-content-between">
+                        <span>${h.description}</span>
+                        <span class="${h.type === 'income' ? 'text-success' : 'text-danger'}">${h.amount >= 0 ? '+' : ''}${h.amount} ₽</span>
+                    </div>
+                    <small class="text-muted">${new Date(h.timestamp).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+
+        // ---- История ----
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            const user = getCurrentUser();
+            if (!user) { container.innerHTML = '<p class="text-muted">Войдите</p>'; return; }
+            const items = data.history.filter(h => h.userId === user.id).slice().reverse();
+            if (!items.length) { container.innerHTML = '<p class="text-muted">История пуста</p>'; return; }
+            container.innerHTML = items.map(h => `
+                <div class="history-item ${h.type === 'income' ? 'income' : 'outcome'}">
+                    <div class="d-flex justify-content-between">
+                        <span>${h.description}</span>
+                        <span class="${h.type === 'income' ? 'text-success' : 'text-danger'}">${h.amount >= 0 ? '+' : ''}${h.amount} ${h.currency === 'rub' ? '₽' : '⭐'}</span>
+                    </div>
+                    <small class="text-muted">${new Date(h.timestamp).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+
+        // ---- Игра Мина ----
+        let gameMines = [], gameOpened = [], gameBet = 0, gameMultiplier = 1.0, gameFinished = false;
+        function generateMines() {
+            const positions = [];
+            while (positions.length < 3) {
+                const pos = Math.floor(Math.random() * 16);
+                if (!positions.includes(pos)) positions.push(pos);
+            }
+            return positions;
+        }
+        function renderGameField() {
+            const container = document.getElementById('gameField');
+            container.innerHTML = '';
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                const isOpened = gameOpened.includes(i);
+                if (isOpened) {
+                    const isMine = gameMines.includes(i);
+                    cell.classList.add('revealed');
+                    if (isMine) { cell.classList.add('mine'); cell.textContent = '💣'; } else { cell.classList.add('safe'); cell.textContent = '✔️'; }
+                } else {
+                    cell.textContent = '❓';
+                    if (!gameFinished) cell.addEventListener('click', onCellClick);
+                }
+                container.appendChild(cell);
+            }
+            document.getElementById('currentMultiplier').textContent = `Множитель: ${gameMultiplier.toFixed(1)}x`;
+            const status = document.getElementById('gameStatus');
+            if (gameFinished) {
+                const isWon = !gameMines.some(m => gameOpened.includes(m));
+                status.className = isWon ? 'alert alert-success' : 'alert alert-danger';
+                status.textContent = isWon ? `Вы выиграли ${Math.round(gameBet * gameMultiplier)} звёзд!` : 'Вы попали на мину! Проигрыш.';
+            } else {
+                status.className = 'alert alert-secondary';
+                status.textContent = 'Открывайте клетки или заберите выигрыш.';
+            }
+            document.getElementById('cashoutBtn').disabled = gameFinished || gameOpened.length === 0;
+        }
+        function onCellClick(e) {
+            if (gameFinished) return;
+            const index = parseInt(e.currentTarget.dataset.index);
+            if (gameOpened.includes(index)) return;
+            gameOpened.push(index);
+            if (gameMines.includes(index)) {
+                gameFinished = true;
+                addHistory(getCurrentUser().id, 'outcome', gameBet, 'star', 'Проигрыш в Мине');
+                renderGameField();
+                renderAll();
+                return;
+            } else {
+                gameMultiplier += 0.2;
+                if (gameOpened.length === 13) {
+                    gameFinished = true;
+                    const win = Math.round(gameBet * gameMultiplier);
+                    getCurrentUser().balance += win;
+                    addHistory(getCurrentUser().id, 'income', win, 'star', `Выигрыш в Мине (${gameBet}⭐ × ${gameMultiplier.toFixed(1)})`);
+                    renderGameField();
+                    renderAll();
+                    return;
+                }
+                renderGameField();
+            }
+        }
+        document.getElementById('startGameBtn').addEventListener('click', function() {
+            const user = getCurrentUser();
+            if (!user) { showToast('Войдите', 'warning'); return; }
+            const bet = parseInt(document.getElementById('betAmount').value);
+            if (isNaN(bet) || bet < 1) { showToast('Введите ставку', 'danger'); return; }
+            if (bet > user.balance) { showToast('Недостаточно звёзд', 'danger'); return; }
+            user.balance -= bet;
+            addHistory(user.id, 'outcome', bet, 'star', 'Ставка в Мине');
+            gameBet = bet;
+            gameMultiplier = 1.0;
+            gameMines = generateMines();
+            gameOpened = [];
+            gameFinished = false;
+            saveData();
+            renderGameField();
+            renderAll();
+        });
+        document.getElementById('cashoutBtn').addEventListener('click', function() {
+            if (gameFinished || gameOpened.length === 0) return;
+            const win = Math.round(gameBet * gameMultiplier);
+            getCurrentUser().balance += win;
+            addHistory(getCurrentUser().id, 'income', win, 'star', `Выигрыш в Мине (${gameBet}⭐ × ${gameMultiplier.toFixed(1)})`);
+            gameFinished = true;
+            saveData();
+            renderGameField();
+            renderAll();
+            showToast(`Вы забрали ${win} ⭐`, 'success');
+        });
+
+        // ====================== PVP РУЛЕТКА ======================
+        document.getElementById('pvpStartBtn').addEventListener('click', function() {
+            const user = getCurrentUser();
+            if (!user) { showToast('Войдите', 'warning'); return; }
+            const bet = parseInt(document.getElementById('pvpBet').value);
+            if (isNaN(bet) || bet < 10) { showToast('Ставка должна быть ≥ 10', 'danger'); return; }
+            if (bet > user.balance) { showToast('Недостаточно звёзд', 'danger'); return; }
+
+            const botMin = 100, botMax = 10000;
+            const botBets = [];
+            for (let i = 0; i < 3; i++) {
+                botBets.push(Math.floor(Math.random() * (botMax - botMin + 1)) + botMin);
+            }
+            const total = bet + botBets.reduce((a, b) => a + b, 0);
+            const myPercent = (bet / total) * 100;
+
+            const players = [
+                { name: user.name, bet: bet, isMe: true },
+                { name: 'Bot1', bet: botBets[0], isMe: false },
+                { name: 'Bot2', bet: botBets[1], isMe: false },
+                { name: 'Bot3', bet: botBets[2], isMe: false },
+            ];
+
+            const area = document.getElementById('pvpGameArea');
+            area.innerHTML = `
+                <h6>Игра #${Date.now().toString().slice(-6)}</h6>
+                <div class="mb-2">Общий банк: <strong>${total}</strong> ⭐</div>
+                <div class="mb-3">Ваша доля: <strong>${myPercent.toFixed(2)}%</strong></div>
+                <div class="mb-2">Участники:</div>
+                ${players.map(p => `
+                    <div class="pvp-player ${p.isMe ? 'me' : 'bot'} d-flex justify-content-between align-items-center">
+                        <span>${p.isMe ? '👤' : '🤖'} ${p.name}</span>
+                        <span>${p.bet} ⭐ (${((p.bet/total)*100).toFixed(2)}%)</span>
+                    </div>
+                `).join('')}
+                <div class="mt-3">
+                    <button class="btn btn-danger" id="pvpCancelBtn">Отменить</button>
+                    <button class="btn btn-success" id="pvpRollBtn">🎲 Крутить!</button>
+                </div>
+                <div id="pvpResult" class="mt-2"></div>
+            `;
+
+            document.getElementById('pvpCancelBtn').addEventListener('click', function() {
+                area.innerHTML = '<p class="text-muted">Игра отменена.</p>';
+            });
+
+            document.getElementById('pvpRollBtn').addEventListener('click', function() {
+                this.disabled = true;
+                user.balance -= bet;
+                saveData();
+
+                const rand = Math.random() * 100;
+                let winner;
+                if (rand <= myPercent) {
+                    winner = 'you';
+                } else {
+                    const botNames = ['Bot1', 'Bot2', 'Bot3'];
+                    winner = botNames[Math.floor(Math.random() * botNames.length)];
+                }
+
+                const resultDiv = document.getElementById('pvpResult');
+                if (winner === 'you') {
+                    user.balance += total;
+                    addHistory(user.id, 'income', total, 'star', `PvP выигрыш (банк ${total}⭐)`);
+                    resultDiv.innerHTML = `<div class="alert alert-success">🎉 Вы выиграли! +${total} ⭐</div>`;
+                } else {
+                    addHistory(user.id, 'outcome', bet, 'star', `PvP проигрыш (ставка ${bet}⭐)`);
+                    resultDiv.innerHTML = `<div class="alert alert-danger">😞 Победил ${winner}. Вы проиграли ${bet} ⭐</div>`;
+                }
+                saveData();
+                renderAll();
+                setTimeout(() => {
+                    area.innerHTML = '<p class="text-muted">Нажмите «Создать игру» для новой.</p>';
+                }, 5000);
+            });
+        });
+
+        // ====================== КАНАЛ ======================
+        let channelTimer = null;
+        let channelJoined = [];
+        let channelSubsCopy = [];
+
+        function renderChannelFeed() {
+            const container = document.getElementById('channelFeed');
+            if (!data.channelMessages || data.channelMessages.length === 0) {
+                container.innerHTML = '<p class="text-muted">Сообщений пока нет.</p>';
+                return;
+            }
+            container.innerHTML = data.channelMessages.slice().reverse().map(msg => {
+                if (msg.type === 'result') {
+                    return `
+                        <div class="channel-post">
+                            <div class="d-flex justify-content-between">
+                                <span class="author"><i class="fas fa-trophy"></i> Розыгрыш завершён!</span>
+                                <span class="time">${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                            <div>Победитель: <span class="winner-badge">${msg.winner}</span> 🎉</div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="channel-post">
+                            <div class="d-flex justify-content-between">
+                                <span class="author">${msg.author}</span>
+                                <span class="time">${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                            <div>${msg.text}</div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function renderChannelSubscribers() {
+            const container = document.getElementById('channelSubscribersList');
+            if (!data.subscribers.length) {
+                container.innerHTML = '<p class="text-muted">Нет подписчиков</p>';
+                return;
+            }
+            container.innerHTML = data.subscribers.map(name => `
+                <span class="subscriber-entry ${channelJoined.includes(name) ? 'joined' : ''}">${name}</span>
+            `).join('');
+        }
+
+        document.getElementById('channelSendBtn').addEventListener('click', function() {
+            const user = getCurrentUser();
+            if (!user) { showToast('Войдите, чтобы писать в канале', 'warning'); return; }
+            const text = document.getElementById('channelMessage').value.trim();
+            if (!text) { showToast('Введите сообщение', 'warning'); return; }
+            document.getElementById('channelMessage').value = '';
+            data.channelMessages.push({ author: user.name, text, timestamp: Date.now(), type: 'message' });
+            saveData();
+            renderChannelFeed();
+            showToast('Сообщение отправлено', 'success');
+        });
+
+        document.getElementById('channelStartBtn').addEventListener('click', function() {
+            const user = getCurrentUser();
+            if (!user) { showToast('Войдите, чтобы запустить розыгрыш', 'warning'); return; }
+            if (data.subscribers.length === 0) { showToast('Нет подписчиков', 'warning'); return; }
+            if (channelTimer) { showToast('Розыгрыш уже идёт', 'warning'); return; }
+
+            data.channelMessages.push({
+                author: 'Система',
+                text: `Розыгрыш начат! Участников: ${data.subscribers.length}`,
+                timestamp: Date.now(),
+                type: 'message'
+            });
+            saveData();
+            renderChannelFeed();
+
+            channelJoined = [];
+            channelSubsCopy = [...data.subscribers];
+            const container = document.getElementById('channelSubscribersList');
+            container.innerHTML = data.subscribers.map(name => `<span class="subscriber-entry">${name}</span>`).join('');
+
+            let count = 0;
+            const total = data.subscribers.length;
+            const interval = Math.min(1500, Math.floor(60000 / total));
+
+            channelTimer = setInterval(() => {
+                if (count < total) {
+                    const available = channelSubsCopy.filter(name => !channelJoined.includes(name));
+                    if (available.length === 0) { clearInterval(channelTimer); channelTimer = null; return; }
+                    const chosen = available[Math.floor(Math.random() * available.length)];
+                    channelJoined.push(chosen);
+                    document.querySelectorAll('.subscriber-entry').forEach(el => {
+                        if (el.textContent === chosen) el.classList.add('joined');
+                    });
+                    count++;
+                } else {
+                    clearInterval(channelTimer);
+                    channelTimer = null;
+                    if (channelJoined.length > 0) {
+                        const winner = channelJoined[Math.floor(Math.random() * channelJoined.length)];
+                        data.channelMessages.push({
+                            author: 'Система',
+                            text: `Розыгрыш завершён! Победитель: ${winner}`,
+                            timestamp: Date.now(),
+                            type: 'result',
+                            winner: winner
+                        });
+                        saveData();
+                        renderChannelFeed();
+                        showToast(`Победитель: ${winner} 🎉`, 'success');
+                    } else {
+                        showToast('Никто не зашёл', 'warning');
+                    }
+                }
+            }, interval);
+        });
+
+        // ====================== АДМИНКА ======================
+        let adminAuthenticated = false;
+
+        function renderAdminPackages() {
+            const container = document.getElementById('adminPackagesList');
+            container.innerHTML = data.packages.map(p => `
+                <div class="border-bottom p-2 d-flex justify-content-between">
+                    <span>⭐ ${p.stars} = ${p.price} ₽</span>
+                    <button class="btn btn-sm btn-danger delete-package" data-id="${p.id}"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+            container.querySelectorAll('.delete-package').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    if (confirm('Удалить пакет?')) {
+                        data.packages = data.packages.filter(p => p.id !== id);
+                        saveData();
+                        renderAll();
+                    }
+                });
+            });
+        }
+
+        function renderAdminNFT() {
+            const container = document.getElementById('adminNFTList');
+            container.innerHTML = data.nftItems.map(item => `
+                <div class="border-bottom p-2 d-flex justify-content-between">
+                    <span>${item.name}</span>
+                    <button class="btn btn-sm btn-danger delete-nft" data-id="${item.id}"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+            container.querySelectorAll('.delete-nft').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    if (confirm('Удалить NFT из магазина?')) {
+                        data.nftItems = data.nftItems.filter(i => i.id !== id);
+                        saveData();
+                        renderAll();
+                    }
+                });
+            });
+        }
+
+        function renderAdminDepositRequests() {
+            const container = document.getElementById('adminDepositRequests');
+            const reqs = data.depositRequests.filter(r => r.status === 'pending');
+            if (!reqs.length) { container.innerHTML = '<p class="text-muted">Нет заявок</p>'; return; }
+            container.innerHTML = reqs.map(r => {
+                const user = getUser(r.userId);
+                const pkg = data.packages.find(p => p.id === r.packageId);
+                return `
+                    <div class="border-bottom p-2 d-flex justify-content-between">
+                        <span>${user ? user.name : '?'} — ⭐ ${pkg ? pkg.stars : '?'} (${pkg ? pkg.price : '?'} ₽)</span>
+                        <div>
+                            <button class="btn btn-sm btn-success confirm-deposit" data-id="${r.id}">✅</button>
+                            <button class="btn btn-sm btn-danger reject-deposit" data-id="${r.id}">❌</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            container.querySelectorAll('.confirm-deposit').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const req = data.depositRequests.find(r => r.id === id);
+                    if (req) {
+                        req.status = 'confirmed';
+                        const pkg = data.packages.find(p => p.id === req.packageId);
+                        if (pkg) {
+                            const user = getUser(req.userId);
+                            if (user) {
+                                user.balance += pkg.stars;
+                                addHistory(user.id, 'income', pkg.stars, 'star', 'Пополнение звёзд (админ)');
+                            }
+                        }
+                        saveData();
+                        renderAll();
+                        showToast('Заявка подтверждена', 'success');
+                    }
+                });
+            });
+            container.querySelectorAll('.reject-deposit').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const req = data.depositRequests.find(r => r.id === id);
+                    if (req) {
+                        req.status = 'cancelled';
+                        saveData();
+                        renderAll();
+                        showToast('Заявка отклонена', 'warning');
+                    }
+                });
+            });
+        }
+
+        function renderAdminNFTPurchaseRequests() {
+            const container = document.getElementById('adminNFTPurchaseRequests');
+            const reqs = data.nftPurchaseRequests.filter(r => r.status === 'pending');
+            if (!reqs.length) { container.innerHTML = '<p class="text-muted">Нет заявок</p>'; return; }
+            container.innerHTML = reqs.map(r => {
+                const user = getUser(r.userId);
+                const item = data.nftItems.find(i => i.id === r.nftId);
+                return `
+                    <div class="border-bottom p-2 d-flex justify-content-between">
+                        <span>${user ? user.name : '?'} — ${item ? item.name : '?'} (${item ? item.priceRub : '?'} ₽)</span>
+                        <div>
+                            <button class="btn btn-sm btn-success confirm-nft-purchase" data-id="${r.id}">✅</button>
+                            <button class="btn btn-sm btn-danger reject-nft-purchase" data-id="${r.id}">❌</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            container.querySelectorAll('.confirm-nft-purchase').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const req = data.nftPurchaseRequests.find(r => r.id === id);
+                    if (req) {
+                        req.status = 'confirmed';
+                        const user = getUser(req.userId);
+                        const item = data.nftItems.find(i => i.id === req.nftId);
+                        if (user && item) {
+                            if (!user.ownedNFTs) user.ownedNFTs = [];
+                            user.ownedNFTs.push(item.id);
+                            addHistory(user.id, 'outcome', 0, 'rub', `Покупка NFT за рубли: ${item.name}`);
+                            showToast(`NFT ${item.name} выдан пользователю ${user.name}`, 'success');
+                        }
+                        saveData();
+                        renderAll();
+                    }
+                });
+            });
+            container.querySelectorAll('.reject-nft-purchase').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const req = data.nftPurchaseRequests.find(r => r.id === id);
+                    if (req) {
+                        req.status = 'cancelled';
+                        saveData();
+                        renderAll();
+                        showToast('Заявка отклонена', 'warning');
+                    }
+                });
+            });
+        }
+
+        function renderAdminUsers() {
+            const container = document.getElementById('adminUsersList');
+            container.innerHTML = data.users.map(u => `
+                <div class="border-bottom p-2 d-flex justify-content-between align-items-center">
+                    <span>${u.name} (⭐ ${u.balance} | 💳 ${u.cardBalance} ₽) ${u.isAdmin ? '👑' : ''}</span>
+                    <div>
+                        <button class="btn btn-sm btn-warning edit-balance" data-id="${u.id}"><i class="fas fa-edit"></i> Рубли</button>
+                        <button class="btn btn-sm btn-info edit-stars" data-id="${u.id}"><i class="fas fa-star"></i> Звёзды</button>
+                    </div>
+                </div>
+            `).join('');
+            container.querySelectorAll('.edit-balance').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const user = getUser(id);
+                    if (!user) return;
+                    const val = prompt(`Новый рублёвый баланс для ${user.name}`, user.cardBalance);
+                    if (val !== null && !isNaN(val)) {
+                        user.cardBalance = parseInt(val);
+                        addHistory(user.id, 'income', parseInt(val), 'rub', 'Изменение баланса карты админом');
+                        saveData();
+                        renderAll();
+                        showToast('Баланс карты обновлён', 'success');
+                    }
+                });
+            });
+            container.querySelectorAll('.edit-stars').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const user = getUser(id);
+                    if (!user) return;
+                    const val = prompt(`Новый баланс звёзд для ${user.name}`, user.balance);
+                    if (val !== null && !isNaN(val)) {
+                        user.balance = parseInt(val);
+                        saveData();
+                        renderAll();
+                        showToast('Баланс звёзд обновлён', 'success');
+                    }
+                });
+            });
+        }
+
+        function renderAdminSubscribers() {
+            const container = document.getElementById('adminSubscribersList');
+            if (!data.subscribers.length) {
+                container.innerHTML = '<p class="text-muted">Нет подписчиков</p>';
+                return;
+            }
+            container.innerHTML = data.subscribers.map(name => `
+                <div class="border-bottom p-2 d-flex justify-content-between align-items-center">
+                    <span>${name}</span>
+                    <button class="btn btn-sm btn-danger delete-subscriber" data-name="${name}"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+            container.querySelectorAll('.delete-subscriber').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const name = this.dataset.name;
+                    if (confirm(`Удалить подписчика ${name}?`)) {
+                        data.subscribers = data.subscribers.filter(s => s !== name);
+                        saveData();
+                        renderAll();
+                        showToast('Подписчик удалён', 'info');
+                    }
+                });
+            });
+        }
+
+        document.getElementById('addSubscribersBtn').addEventListener('click', function() {
+            const count = parseInt(document.getElementById('subscriberCountInput').value);
+            if (isNaN(count) || count < 1) { showToast('Введите корректное количество', 'warning'); return; }
+            let maxNum = 0;
+            data.subscribers.forEach(name => {
+                const match = name.match(/^User(\d+)$/);
+                if (match) { const num = parseInt(match[1]); if (num > maxNum) maxNum = num; }
+            });
+            const newNames = [];
+            for (let i = 1; i <= count; i++) {
+                maxNum++;
+                newNames.push('User' + maxNum);
+            }
+            data.subscribers.push(...newNames);
+            saveData();
+            renderAll();
+            showToast(`Добавлено ${count} подписчиков`, 'success');
+        });
+
+        // ---- Админ вход ----
+        document.getElementById('adminAuthBtn').addEventListener('click', function() {
+            const pass = document.getElementById('adminPassword').value;
+            if (pass === 'admin123') {
+                adminAuthenticated = true;
+                document.getElementById('adminContent').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                document.getElementById('adminLoginBtn').classList.add('d-none');
+                document.getElementById('adminLogoutBtn').classList.remove('d-none');
+                renderAll();
+                showToast('Добро пожаловать в админку', 'success');
+                // активируем вкладку админа
+                const adminTab = document.getElementById('admin-tab');
+                const bsTab = new bootstrap.Tab(adminTab);
+                bsTab.show();
+            } else {
+                showToast('Неверный пароль', 'danger');
+            }
+        });
+
+        document.getElementById('adminLogoutBtn').addEventListener('click', function() {
+            adminAuthenticated = false;
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminDashboard').style.display = 'none';
+            document.getElementById('adminLoginBtn').classList.remove('d-none');
+            document.getElementById('adminLogoutBtn').classList.add('d-none');
+            showToast('Вы вышли из админки', 'info');
+            renderAll();
+        });
+
+        // ---- Добавление пакета / NFT ----
+        document.getElementById('addPackageBtn').addEventListener('click', function() {
+            const stars = prompt('Количество звёзд:');
+            const price = prompt('Цена в рублях:');
+            const details = prompt('Реквизиты для оплаты:');
+            if (stars && price && details) {
+                data.packages.push({ id: getNextId(data.packages), stars: parseInt(stars), price: parseInt(price), details });
+                saveData();
+                renderAll();
+                showToast('Пакет добавлен', 'success');
+            }
+        });
+        document.getElementById('addNFTBtn').addEventListener('click', function() {
+            const name = prompt('Название NFT:');
+            const link = prompt('Ссылка:');
+            const priceStars = prompt('Цена в звёздах (или пусто):');
+            const priceRub = prompt('Цена в рублях (или пусто):');
+            if (name && link) {
+                data.nftItems.push({
+                    id: getNextId(data.nftItems),
+                    name, link,
+                    priceStars: priceStars ? parseInt(priceStars) : null,
+                    priceRub: priceRub ? parseInt(priceRub) : null,
+                    image: ''
+                });
+                saveData();
+                renderAll();
+                showToast('NFT добавлен', 'success');
+            }
+        });
+
+        // ====================== ВХОД / ВЫХОД ======================
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
+        });
+        document.getElementById('loginConfirmBtn').addEventListener('click', function() {
+            const name = document.getElementById('loginUsername').value.trim();
+            if (!name) { showToast('Введите имя', 'warning'); return; }
+            let user = data.users.find(u => u.name === name);
+            if (!user) {
+                user = { id: getNextId(data.users), name, balance: 50, cardBalance: 0, isAdmin: false, ownedNFTs: [] };
+                data.users.push(user);
+                saveData();
+                showToast(`Добро пожаловать, ${name}!`, 'success');
+            }
+            data.currentUserId = user.id;
+            saveData();
+            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+            renderAll();
+            renderGameField();
+            showToast(`Привет, ${user.name}!`, 'info');
+        });
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            data.currentUserId = null;
+            saveData();
+            renderAll();
+            renderGameField();
+            showToast('Вы вышли', 'info');
+        });
+
+        // ====================== ИНИЦИАЛИЗАЦИЯ ======================
+        renderAll();
+        renderGameField();
+
+        // При переключении на админ-вкладку обновляем, если уже авторизован
+        document.querySelector('[data-bs-target="#admin"]').addEventListener('shown.bs.tab', function() {
+            if (adminAuthenticated) renderAll();
+        });
+
+        console.log('Vetrix загружена. Админ пароль: admin123');
+        console.log('Номер карты: 777 888 666, PIN: 8888');
+    </script>
+</body>
+</html>
